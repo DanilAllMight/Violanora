@@ -8,6 +8,8 @@ build/
 # Переменные окружения (КРИТИЧНО: не пушить на GitHub!)
 .env
 .env.local
+.env.production
+.env.development
 
 # Базы данных (чтобы не залить гигабайты локальных данных в репозиторий)
 pgdata/
