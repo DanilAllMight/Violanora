@@ -1,4 +1,4 @@
-self.addEventListener("install", (event) => {
+/*self.addEventListener("install", (event) => {
   self.skipWaiting();
 });
 self.addEventListener("activate", (event) => {
@@ -36,4 +36,4 @@ messaging.onBackgroundMessage((payload) => {
   };
 
   self.registration.showNotification(notificationTitle, notificationOptions);
-});
+});*/
