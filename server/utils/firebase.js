@@ -1,4 +1,4 @@
-const admin = require("firebase-admin");
+/*const admin = require("firebase-admin");
 const path = require("path");
 require("dotenv").config();
 
@@ -31,7 +31,7 @@ try {
  * @param {string} title - Заголовок (например, имя отправителя)
  * @param {string} body - Текст сообщения
  * @param {object} data - Дополнительные данные (например, chatId)
- */
+ 
 const sendPushNotification = async (token, title, body, data = {}) => {
   if (!token) return;
 
@@ -56,4 +56,4 @@ const sendPushNotification = async (token, title, body, data = {}) => {
   }
 };
 
-module.exports = { sendPushNotification };
+module.exports = { sendPushNotification };*/
