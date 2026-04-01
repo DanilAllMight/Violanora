@@ -1,0 +1,12 @@
+# Разрешить всем поисковикам индексировать всё
+User-agent: *
+Allow: /
+
+# Запретить индексацию системных папок и личных кабинетов
+Disallow: /admin
+Disallow: /auth
+Disallow: /profile
+Disallow: /api
+
+# Укажите адрес вашей карты сайта (если она будет)
+Sitemap: https://yourdomain.com

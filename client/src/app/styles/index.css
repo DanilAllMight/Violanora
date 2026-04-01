@@ -1,0 +1,73 @@
+@import "tailwindcss";
+
+@theme {
+  --color-app-bg: var(--app-bg);
+  --color-app-text: var(--app-text);
+  --color-app-btn: var(--app-btn);
+  --color-app-nav: var(--app-nav);
+  --color-app-card: var(--app-card);
+  --color-app-icon: var(--app-icon);
+
+  --color-app-accent: var(--app-accent);
+}
+
+:root {
+  --app-bg: #f8fafc;
+  --app-text: #000007;
+  --app-btn: #010912;
+  --app-nav: #e7e7ec;
+  --app-card: #ffffff;
+  --app-icon: #eaeaed;
+
+  --app-accent: #a855f7;
+
+  font-family: system-ui, sans-serif;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --app-bg: #000000;
+    --app-text: #f8fafc;
+    --app-btn: #3f4044;
+    --app-nav: #3f4044;
+    --app-card: #3f4044;
+    --app-icon: #b4b4b6;
+  }
+}
+
+.dark {
+  --app-bg: #000000;
+  --app-text: #f8fafc;
+  --app-btn: #3f4044;
+  --app-nav: #3f4044;
+  --app-card: #3f4044;
+  --app-icon: #b4b4b6;
+
+  --app-accent: #c084fc;
+}
+
+body {
+  min-height: 100vh;
+  background-color: var(--app-bg);
+}
+
+button,
+a {
+  margin: 0;
+  cursor: pointer;
+}
+
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  background-color: var(--app-bg);
+  height: 100%;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
