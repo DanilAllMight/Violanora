@@ -1,5 +1,5 @@
 // features/push-notifications/api/notifyApi.ts
-import { $api } from "@/shared/api/api";
+/*import { $api } from "@/shared/api/api";
 import { , VAPID_KEY } from "@/shared/api/firebase/config";
 import { getToken, onMessage, type MessagePayload } from "firebase/";
 
@@ -49,3 +49,4 @@ export const onMessageListener = () =>
       resolve(payload);
     });
   });
+*/
