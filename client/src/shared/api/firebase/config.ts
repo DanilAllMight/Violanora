@@ -1,5 +1,5 @@
 // shared/api/firebase/config.ts
-import { initializeApp } from "firebase/app";
+/*import { initializeApp } from "firebase/app";
 import { getMessaging, type Messaging } from "firebase/messaging";
 
 const firebaseConfig = {
@@ -17,4 +17,4 @@ const app = initializeApp(firebaseConfig);
 // Экспортируем типизированный инстанс
 export const messaging: Messaging = getMessaging(app);
 export const VAPID_KEY =
-  "BDM6uk_2cH51vtqM97bMjWG9ShYzGRADCPxZInbrWMHR62vYN7lY7zSiXsW5h5ZKDhRBnp1Heq_AgLWKQ_Y9sBE";
+  "BDM6uk_2cH51vtqM97bMjWG9ShYzGRADCPxZInbrWMHR62vYN7lY7zSiXsW5h5ZKDhRBnp1Heq_AgLWKQ_Y9sBE";*/

@@ -1,7 +1,7 @@
 // features/push-notifications/api/notifyApi.ts
 import { $api } from "@/shared/api/api";
-import { messaging, VAPID_KEY } from "@/shared/api/firebase/config";
-import { getToken, onMessage, type MessagePayload } from "firebase/messaging";
+import { , VAPID_KEY } from "@/shared/api/firebase/config";
+import { getToken, onMessage, type MessagePayload } from "firebase/";
 
 export const initNotifications = async (userId: number | string) => {
   try {
@@ -10,7 +10,7 @@ export const initNotifications = async (userId: number | string) => {
 
     // 1. Регистрируем воркер
     const registration = await navigator.serviceWorker.register(
-      "/firebase-messaging-sw.js",
+      "/firebase--sw.js",
       {
         scope: "/",
       },
@@ -29,7 +29,7 @@ export const initNotifications = async (userId: number | string) => {
     console.log("🔍 [FCM] Запрашиваю токен...");
 
     // 2. Получаем токен, передавая регистрацию
-    const token = await getToken(messaging, {
+    const token = await getToken(, {
       vapidKey: VAPID_KEY,
       serviceWorkerRegistration: registration,
     });
@@ -45,7 +45,7 @@ export const initNotifications = async (userId: number | string) => {
 
 export const onMessageListener = () =>
   new Promise<MessagePayload>((resolve) => {
-    onMessage(messaging, (payload) => {
+    onMessage(, (payload) => {
       resolve(payload);
     });
   });
