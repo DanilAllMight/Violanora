@@ -54,6 +54,17 @@ services:
     networks:
       - chat-network
 
+  gateway:
+    image: "jc21/nginx-proxy-manager:latest"
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "81:81" # Админка для настройки HTTPS
+      - "443:443" # Тот самый порт для HTTPS
+    volumes:
+      - ./proxy_data:/data
+      - ./letsencrypt:/etc/letsencrypt
+
 volumes:
   pgdata:
   mongodata:
