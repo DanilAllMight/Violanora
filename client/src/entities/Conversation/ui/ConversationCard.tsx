@@ -35,7 +35,7 @@ export const ConversationCard = ({ conversation }: ConversationCardProps) => {
   );
   const textToDisplay = liveLastMsg || conversation.lastMessage.text;
 
-  const isMine = partner.id == user?.id;
+  const isMine = conversation.lastMessage.senderId == user?.id;
 
   console.log("CONVERSATION ", conversation, "partner ", partner);
   console.log("Partn Id", partner.id, "My id ", user?.id, "is Mine ", isMine);
@@ -62,8 +62,6 @@ export const ConversationCard = ({ conversation }: ConversationCardProps) => {
       toast.error("Для отправки сообщений, нужно авторизироваться!");
     }
   };
-
-  useEffect(() => {}, [isMine]);
 
   return (
     <li onClick={handleClick}>
