@@ -32,17 +32,25 @@ export const useConversationListStore = create<ConversationState>((set) => ({
       );
 
       if (existing) {
-        console.log("Перемещаем существующий диалог вверх");
-        // Убираем старый объект из списка
+        console.log("Обновляем данные и перемещаем диалог вверх");
+
+        // Создаем НОВЫЙ объект: берем всё из старого и ПЕРЕЗАПИСЫВАЕМ новыми данными из сокета
+        // Это обновит и текст сообщения, и senderId (для корректного isMine)
+        const updatedConversation = {
+          ...existing,
+          ...conversation,
+        };
+
+        // Убираем старую копию из списка по _id
         const otherConversations = state.conversations.filter(
           (c) => c._id !== conversation._id,
         );
-        // Возвращаем его в начало БЕЗ обновления данных (используем 'existing')
-        return { conversations: [existing, ...otherConversations] };
+
+        // Возвращаем НОВЫЙ массив с ОБНОВЛЕННЫМ объектом в начале
+        return { conversations: [updatedConversation, ...otherConversations] };
       }
 
-      console.log("Добавляем новый диалог в начало");
-      // Если его нет совсем — добавляем новый объект из сокета
+      console.log("Добавляем абсолютно новый диалог в начало");
       return { conversations: [conversation, ...state.conversations] };
     });
   },

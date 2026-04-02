@@ -3,6 +3,7 @@ import type { ConversationCardProps } from "../model/types/ConversationCard";
 import { useOnlineStore } from "@/entities/User/model/store/useOnlineStore";
 import { useUserStore } from "@/entities/User/model/store/useUserStore";
 import { UserAvatar } from "@/entities/User/ui/UserAvatar/UserAvatar";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -26,6 +27,10 @@ export const ConversationCard = ({ conversation }: ConversationCardProps) => {
     partner ? state.onlineIds.has(Number(partner.id)) : false,
   );
 
+  const conv = useConversationStore(
+    (state) => state.lastMessages[conversation._id],
+  );
+
   const dbUnread = conversation.unreadCount[user?.id || 0] || 0;
   const totalUnread = dbUnread + liveUnread;
 
@@ -36,8 +41,10 @@ export const ConversationCard = ({ conversation }: ConversationCardProps) => {
 
   const isMine = conversation.lastMessage.senderId == user?.id;
 
-  console.log("CONVERSATION ", conversation, "partner ", partner);
-  console.log("Partn Id", partner.id, "My id ", user?.id, "is Mine ", isMine);
+  //console.log("CONVERSATION ", conversation, "partner ", partner);
+  //console.log("Partn Id", partner.id, "My id ", user?.id, "is Mine ", isMine);
+
+  console.log("Диалог обновлён");
 
   const handleClick = () => {
     if (partner) {
@@ -61,6 +68,8 @@ export const ConversationCard = ({ conversation }: ConversationCardProps) => {
       toast.error("Для отправки сообщений, нужно авторизироваться!");
     }
   };
+
+  useEffect(() => {}, [isMine]);
 
   return (
     <li onClick={handleClick}>
