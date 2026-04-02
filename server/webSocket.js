@@ -1,6 +1,4 @@
 const WebSocket = require("ws");
-const { Dialog } = require("./models/Dialog");
-const { Message } = require("./models/Message");
 const {
   getSingleConversation,
 } = require("./controllers/conversation-controller");
@@ -76,6 +74,14 @@ function setupWebSocket(server) {
       try {
         const data = JSON.parse(rawData);
         const { type } = data;
+
+        if (data.type == "ping") {
+          ws.send(
+            JSON.stringify({
+              type: "pong",
+            }),
+          );
+        }
 
         logger.info("TYPE=", type);
 

@@ -8,33 +8,75 @@ export const useSocket = (userId: number | undefined) => {
   const [socket, setSocket] = useState<WebSocket | null>(globalSocket);
 
   useEffect(() => {
-    // Если пользователь авторизован, но соединения ещё нет с WSS, то оно создаётся
-    if (userId && !globalSocket) {
+    let reconnectTimer: NodeJS.Timeout;
+    let heartbeatTimer: NodeJS.Timeout;
+
+    const connect = () => {
+      // Если нет ID или сокет уже открыт — ничего не делаем
+      if (
+        !userId ||
+        (globalSocket && globalSocket.readyState === WebSocket.OPEN)
+      )
+        return;
+
       const baseUrl = import.meta.env.VITE_WS_URL;
       const ws = new WebSocket(`${baseUrl}?userId=${userId}`);
 
-      // Сразу после создания вешается обработчик, чтобы не пропустить сообщения от WSS
+      ws.onopen = () => {
+        console.log("WSS: Соединение установлено");
+        globalSocket = ws;
+        setSocket(ws);
+
+        // 1. Пинг-понг для Nginx (Heartbeat)
+        heartbeatTimer = setInterval(() => {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: "ping" }));
+          }
+        }, 30000);
+      };
+
       ws.onmessage = (event) => {
-        //logger.info("Raw WS Message received in global handler");
+        // Пропускаем системные сообщения (если сервер шлет 'pong')
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === "pong") return;
+        } catch (e) {}
+
         messageListeners.forEach((fn) => fn(event));
       };
 
-      // Соединяемся к созданному WSS и сохраняем его в состояние и в глобальный сокет
-      ws.onopen = () => {
-        globalSocket = ws;
-        setSocket(ws);
-      };
+      ws.onclose = (event) => {
+        console.log(
+          `WSS: Соединение закрыто (код: ${event.code}). Реконнект через 3 сек...`,
+        );
 
-      // В случае разрыва соединения обнуляем глобальный сокет и состояние
-      ws.onclose = () => {
+        // Очистка перед новой попыткой
+        clearInterval(heartbeatTimer);
         globalSocket = null;
         setSocket(null);
+
+        // 2. АВТО-РЕКОННЕКТ
+        // Не пытаемся соединиться, если закрыли намеренно (код 1000)
+        if (event.code !== 1000) {
+          reconnectTimer = setTimeout(connect, 3000);
+        }
       };
-    }
+
+      ws.onerror = (error) => {
+        console.error("WSS: Ошибка сокета", error);
+        ws.close(); // Провоцируем onclose для запуска реконнекта
+      };
+    };
+
+    connect();
+
+    // 3. Cleanup: Очистка таймеров при размонтировании или смене userId
+    return () => {
+      clearTimeout(reconnectTimer);
+      clearInterval(heartbeatTimer);
+    };
   }, [userId]);
 
-  // Единая функция для подписки всех слушателей на сообщения, получаемые этим сокетом с WSS
-  // Функция CallBack потому что чувствительная к отрисовке компонента - спам на сервер
   const subscribe = useCallback((callback: (ev: MessageEvent) => void) => {
     messageListeners.push(callback);
     return () => {
@@ -42,6 +84,5 @@ export const useSocket = (userId: number | undefined) => {
     };
   }, []);
 
-  // Возвращаем сокет (чтобы отправлять сообщения) и объект для подписки на события с WSS
   return { socket, subscribe };
 };
