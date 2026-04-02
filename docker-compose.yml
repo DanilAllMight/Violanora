@@ -64,6 +64,8 @@ services:
     volumes:
       - ./proxy_data:/data
       - ./letsencrypt:/etc/letsencrypt
+    networks:
+      - chat-network
 
 volumes:
   pgdata:
