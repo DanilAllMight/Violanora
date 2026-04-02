@@ -34,7 +34,9 @@ export const ConversationCard = ({ conversation }: ConversationCardProps) => {
   );
   const textToDisplay = liveLastMsg || conversation.lastMessage.text;
 
-  console.log("CONVERSATION ", conversation);
+  const isMine = partner.id == user?.id;
+
+  console.log("CONVERSATION ", conversation, "partner ", partner);
 
   const handleClick = () => {
     if (partner) {
@@ -84,7 +86,7 @@ export const ConversationCard = ({ conversation }: ConversationCardProps) => {
             )}
           </div>
           <div className="flex items-center gap-2">
-            {textToDisplay ? (
+            {textToDisplay && isMine ? (
               <span className="text-app-text">Вы: </span>
             ) : (
               <span className="text-app-text">{partner?.username}: </span>
