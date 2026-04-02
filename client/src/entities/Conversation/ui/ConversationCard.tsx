@@ -37,6 +37,7 @@ export const ConversationCard = ({ conversation }: ConversationCardProps) => {
   const isMine = partner.id == user?.id;
 
   console.log("CONVERSATION ", conversation, "partner ", partner);
+  console.log("Partn Id", partner.id, "My id ", user?.id, "is Mine ", isMine);
 
   const handleClick = () => {
     if (partner) {
