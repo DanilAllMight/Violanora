@@ -27,10 +27,6 @@ export const ConversationCard = ({ conversation }: ConversationCardProps) => {
     partner ? state.onlineIds.has(Number(partner.id)) : false,
   );
 
-  const conv = useConversationStore(
-    (state) => state.lastMessages[conversation._id],
-  );
-
   const dbUnread = conversation.unreadCount[user?.id || 0] || 0;
   const totalUnread = dbUnread + liveUnread;
 
