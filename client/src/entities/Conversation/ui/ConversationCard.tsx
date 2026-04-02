@@ -3,7 +3,6 @@ import type { ConversationCardProps } from "../model/types/ConversationCard";
 import { useOnlineStore } from "@/entities/User/model/store/useOnlineStore";
 import { useUserStore } from "@/entities/User/model/store/useUserStore";
 import { UserAvatar } from "@/entities/User/ui/UserAvatar/UserAvatar";
-import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
