@@ -87,7 +87,7 @@ export const ConversationCard = ({ conversation }: ConversationCardProps) => {
             )}
           </div>
           <div className="flex items-center gap-2">
-            {textToDisplay && isMine ? (
+            {isMine ? (
               <span className="text-app-text">Вы: </span>
             ) : (
               <span className="text-app-text">{partner?.username}: </span>
