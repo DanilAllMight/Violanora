@@ -11,6 +11,11 @@ const dialogSchema = new mongoose.Schema(
       text: String,
       senderId: String,
       createdAt: { type: Date, default: Date.now },
+      status: {
+        type: String,
+        enum: ["sent", "sending", "read"],
+        default: "sent",
+      },
     },
     unreadCount: {
       type: Map,

@@ -2,6 +2,7 @@ const { User } = require("../models/models");
 const bcrypt = require("bcrypt");
 const sharp = require("sharp");
 const { supabase } = require("../utils/supabase");
+const { where } = require("sequelize");
 
 class UserController {
   async registration(req, res) {
@@ -192,6 +193,25 @@ class UserController {
       return res
         .status(500)
         .json({ error: "Ошибка сервера при сохранении токена" });
+    }
+  }
+
+  async updateUserData(req, res) {
+    const { userId, data } = req.body;
+
+    console.log("data, ", data);
+
+    const user = await User.update(
+      { username: data.username },
+      { where: { id: userId } },
+    );
+
+    if (user) {
+      const usr = { user: { username: data.username } };
+      console.log("username ", usr);
+      res.json(usr);
+    } else {
+      res.status(400).json("Ошибка в данных");
     }
   }
 }

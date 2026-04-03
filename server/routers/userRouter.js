@@ -14,5 +14,6 @@ router.post(
   userController.uploadAvatar,
 );
 router.post("/fcm-token", userController.updateFcmToken);
+router.post("/update", userController.updateUserData);
 
 module.exports = router;

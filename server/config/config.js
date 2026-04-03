@@ -1,6 +1,6 @@
 require("dotenv").config(); // Это подтянет DATABASE_URL из твоего .env
 
-/*module.exports = {
+module.exports = {
   development: {
     use_env_variable: "DATABASE_URL",
     dialect: "postgres",
@@ -15,10 +15,7 @@ require("dotenv").config(); // Это подтянет DATABASE_URL из тво�
     use_env_variable: "DATABASE_URL",
     dialect: "postgres",
     dialectOptions: {
-      ssl: {
-        require: true,
-        rejectUnauthorized: false,
-      },
+      ssl: false,
     },
   },
-};*/
+};

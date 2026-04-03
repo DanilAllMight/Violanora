@@ -1,4 +1,4 @@
-self.addEventListener("install", (event) => {
+/*self.addEventListener("install", (event) => {
   self.skipWaiting();
 });
 self.addEventListener("activate", (event) => {
@@ -9,7 +9,7 @@ importScripts(
   "https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js",
 );
 importScripts(
-  "https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js",
+  "https://www.gstatic.com/firebasejs/9.23.0/firebase--compat.js",
 );
 
 const firebaseConfig = {
@@ -17,7 +17,7 @@ const firebaseConfig = {
   authDomain: "real-time-chat-7e556.firebaseapp.com",
   projectId: "real-time-chat-7e556",
   storageBucket: "real-time-chat-7e556.firebasestorage.app",
-  messagingSenderId: "33062552109",
+  SenderId: "33062552109",
   appId: "1:33062552109:web:a99e7918472fe4a6a26ea4",
   measurementId: "G-JNFDG60JYP",
 };
@@ -36,4 +36,4 @@ messaging.onBackgroundMessage((payload) => {
   };
 
   self.registration.showNotification(notificationTitle, notificationOptions);
-});
+});*/

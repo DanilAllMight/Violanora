@@ -17,9 +17,12 @@ export const ConversationList = () => {
     (state) => state.conversations,
   );
 
+  console.log("Диалоги.");
+
   useEffect(() => {
     if (userId) {
       getConversations(userId);
+      console.log("hi");
     }
   }, [getConversations, userId]);
 

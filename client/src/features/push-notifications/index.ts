@@ -1,1 +1,1 @@
-export { initNotifications } from "./api/notifyApi";
+//export { initNotifications } from "./api/notifyApi";

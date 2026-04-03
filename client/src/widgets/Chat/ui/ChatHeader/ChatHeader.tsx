@@ -10,18 +10,20 @@ interface ChatHeaderProps {
 export const ChatHeader = ({ username, partner_avatar }: ChatHeaderProps) => {
   return (
     <div className="flex w-full items-center justify-center border-b border-gray-50">
-      <div className="relative flex w-full max-w-[700px] items-center justify-center">
-        <NavLink to="/message" className="absolute left-10">
+      <div className="grid w-full max-w-[700px] grid-cols-[auto_1fr] items-center justify-center px-4">
+        <NavLink to="/message" className="">
           <div className="bg-app-nav rounded-full p-3 transition-colors hover:bg-gray-200">
             <ArrowLeft size={20} />
           </div>
         </NavLink>
         <NavLink
-          className="relative flex h-16 items-center justify-center gap-2"
+          className="flex h-16 max-w-full items-center justify-center gap-2 overflow-hidden"
           to="/home"
         >
           <UserAvatar avatar_url={partner_avatar} />
-          <h1 className="text-app-text text-xl font-bold">{username}</h1>
+          <h1 className="text-app-text truncate text-xl font-bold">
+            {username}
+          </h1>
         </NavLink>
       </div>
     </div>

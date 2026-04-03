@@ -3,6 +3,7 @@ const { Message } = require("../models/Message");
 const { User } = require("../models/models");
 const { sendPushNotification } = require("./firebase");
 const logger = require("./logger");
+const WebSocket = require("ws");
 
 function createHandlers(clients, onlineUsers, getSingleConversation) {
   const send = (to, data) => {
@@ -118,9 +119,9 @@ function createHandlers(clients, onlineUsers, getSingleConversation) {
           createdAt: newMessage.createdAt,
         });
 
-        sendPushNotification(user.fcmToken, sender.username, text, {
+        /*sendPushNotification(user.fcmToken, sender.username, text, {
           dialogId: String(newMessage.dialogId),
-        });
+        });*/
 
         if (ws.readyState === WebSocket.OPEN) {
           console.log("SENT_CONFIRMED");

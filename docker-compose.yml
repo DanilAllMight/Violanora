@@ -3,6 +3,12 @@ version: "3.8"
 services:
   db:
     image: postgres:15-alpine
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user_admin -d auth_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     container_name: chat-db-postgres
     restart: always
     environment:
@@ -33,6 +39,7 @@ services:
       - "5000:5000"
     env_file:
       - ./server/.env
+    command: sh -c "npx sequelize-cli db:migrate && node index.js"
     environment:
       DATABASE_URL: postgres://user_admin:secret_password_pg@db:5432/auth_db
       MONGO_URI: mongodb://mongodb:27017/chat_messages_db
@@ -48,9 +55,22 @@ services:
     build: ./client
     container_name: chat-frontend
     ports:
-      - "80:80"
+      - "80"
     depends_on:
       - server
+    networks:
+      - chat-network
+
+  gateway:
+    image: "jc21/nginx-proxy-manager:latest"
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "81:81" # Админка для настройки HTTPS
+      - "443:443" # Тот самый порт для HTTPS
+    volumes:
+      - ./proxy_data:/data
+      - ./letsencrypt:/etc/letsencrypt
     networks:
       - chat-network
 

@@ -3,6 +3,7 @@ import type { ConversationCardProps } from "../model/types/ConversationCard";
 import { useOnlineStore } from "@/entities/User/model/store/useOnlineStore";
 import { useUserStore } from "@/entities/User/model/store/useUserStore";
 import { UserAvatar } from "@/entities/User/ui/UserAvatar/UserAvatar";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -34,7 +35,12 @@ export const ConversationCard = ({ conversation }: ConversationCardProps) => {
   );
   const textToDisplay = liveLastMsg || conversation.lastMessage.text;
 
-  console.log("CONVERSATION ", conversation);
+  const isMine = conversation.lastMessage.senderId == user?.id;
+
+  //console.log("CONVERSATION ", conversation, "partner ", partner);
+  //console.log("Partn Id", partner.id, "My id ", user?.id, "is Mine ", isMine);
+
+  console.log("Диалог обновлён");
 
   const handleClick = () => {
     if (partner) {
@@ -59,9 +65,11 @@ export const ConversationCard = ({ conversation }: ConversationCardProps) => {
     }
   };
 
+  useEffect(() => {}, [isMine]);
+
   return (
-    <li onClick={handleClick}>
-      <article className="bg-app-card grid cursor-pointer grid-cols-[auto_1fr_auto] items-center rounded-2xl border border-gray-50/50 p-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+    <li onClick={handleClick} className="">
+      <article className="bg-app-card grid h-22 cursor-pointer grid-cols-[auto_1fr_auto] items-center overflow-hidden rounded-2xl border border-gray-50/50 p-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
         <div className="relative mr-2 flex h-14 w-14 items-center">
           <UserAvatar avatar_url={partner.avatar_url}></UserAvatar>
           {isOnline ? (
@@ -70,7 +78,7 @@ export const ConversationCard = ({ conversation }: ConversationCardProps) => {
             <div></div>
           )}
         </div>
-        <div className="flex flex-col">
+        <div className="flex min-w-0 flex-col">
           <div className="flex gap-1">
             <h2 className="text-app-text">{partner?.username}</h2>
           </div>
@@ -84,12 +92,14 @@ export const ConversationCard = ({ conversation }: ConversationCardProps) => {
             )}
           </div>
           <div className="flex items-center gap-2">
-            {textToDisplay ? (
-              <span className="text-app-text">Вы: </span>
+            {isMine ? (
+              <span className="text-app-text shrink-0">Вы: </span>
             ) : (
-              <span className="text-app-text">{partner?.username}: </span>
+              <span className="text-app-text shrink-0 truncate">
+                {partner?.username}:{" "}
+              </span>
             )}
-            <span className="text-gray-500">{textToDisplay}</span>
+            <span className="truncate text-gray-500">{textToDisplay}</span>
           </div>
         </div>
         <div>
