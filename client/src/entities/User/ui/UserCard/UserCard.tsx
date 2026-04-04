@@ -12,6 +12,8 @@ export const UserCard = ({ user }: UserCardProps) => {
   const myId = useUserStore.getState().authData?.id;
   const isOnline = useOnlineStore((state) => state.onlineIds.has(user.id));
 
+  console.log("online time: ", user.online_time);
+
   const handleClick = () => {
     if (myId) {
       useConversationStore.getState().setPartnerUsername(user.username);
@@ -30,10 +32,21 @@ export const UserCard = ({ user }: UserCardProps) => {
           {isOnline ? (
             <div className="absolute right-0 bottom-0 h-3 w-3 rounded-xl bg-green-600"></div>
           ) : (
-            <></>
+            <div></div>
           )}
         </div>
-        <h2 className="text-app-text self-start">{user.username}</h2>
+        <div>
+          <h2 className="text-app-text self-start">{user.username}</h2>
+          {!isOnline && user.online_time && (
+            <span>
+              Был в сети в{" "}
+              {new Date(user.online_time).toLocaleTimeString("ru-RU", {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </span>
+          )}
+        </div>
 
         <button
           type="button"

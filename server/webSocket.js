@@ -4,7 +4,19 @@ const {
 } = require("./controllers/conversation-controller");
 const createHandlers = require("./utils/socketHandlers.js");
 const logger = require("./utils/logger.js");
+const { User } = require("./models/models.js");
 let clientsMap = new Map();
+
+const updateOnlineTime = async (userId) => {
+  console.log("userId", userId);
+  const fnd = await User.findOne({ where: { id: userId } });
+  console.log("USER ", fnd);
+  const user = await User.update(
+    { online_time: new Date() },
+    { where: { id: Number(userId) } },
+  );
+  console.log("TIME ", user);
+};
 
 function setupWebSocket(server) {
   const wss = new WebSocket.Server({ server });
@@ -120,6 +132,7 @@ function setupWebSocket(server) {
               onlineUsers.delete(sUserId);
               userSocketsCount.delete(sUserId);
               clients.delete(sUserId);
+              updateOnlineTime(userId);
               broadcast({ type: "USER_OFFLINE", userId: Number(sUserId) });
               console.log(`❌ Юзер ${sUserId} покинул сеть (таймер истек)`);
             }

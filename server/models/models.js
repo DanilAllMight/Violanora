@@ -31,6 +31,10 @@ const User = sequelize.define("user", {
     type: DataTypes.STRING,
     allowNull: true,
   },
+  online_time: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
 });
 
 const Session = sequelize.define(

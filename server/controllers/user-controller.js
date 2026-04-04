@@ -89,7 +89,7 @@ class UserController {
     try {
       console.log("UserController :: getUsers");
       const users = await User.findAndCountAll({
-        attributes: ["id", "email", "username", "avatar_url"],
+        attributes: ["id", "email", "username", "avatar_url", "online_time"],
       });
       //console.log("users ", users);
       const data = { users: users.rows, count: users.count };
