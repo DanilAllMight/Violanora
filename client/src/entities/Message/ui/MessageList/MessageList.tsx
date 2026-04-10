@@ -24,7 +24,7 @@ const groupMessagesByDate = (messages: Message[]) => {
 
 export const MessageList = ({ messages }: MessagesList) => {
   const user = useUserStore.getState().authData;
-  const username = useConversationStore.getState().partner_username;
+  const username = useConversationStore.getState().partner.username;
 
   const groupedMessages = groupMessagesByDate(messages);
 
