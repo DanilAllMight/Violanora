@@ -2,6 +2,7 @@ export interface LastMessage {
   text: string;
   senderId: number;
   createdAt: string; // ISO дата для сортировки
+  status: string;
 }
 
 export interface ChatPartner {

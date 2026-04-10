@@ -6,7 +6,7 @@ const mongoURI =
 
 async function connectDB() {
   try {
-    console.log("ENV ", process.env.MONGODB_URI);
+    console.log("ENV ", process.env.MONGO_URI);
     await mongoose.connect(mongoURI);
     console.log("✅ Локальная MongoDB успешно подключена");
   } catch (err) {

@@ -20,10 +20,11 @@ export const fetchConversation = async ({
       if (partner) {
         const username = partner.username;
         const avatar_url = partner.avatar_url;
-        useConversationStore
-          .getState()
-          .setActiveDialog(response.data._id, username);
-        useConversationStore.getState().setDialogAvatar(avatar_url);
+        useConversationStore.getState().setActiveDialog(
+          response.data._id,
+          username,
+          avatar_url, // Передаем аватар третьим аргументом
+        );
       }
     }
 

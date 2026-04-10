@@ -7,6 +7,7 @@ class ConversationController {
       const { userId } = req.params;
 
       const sUserId = String(userId);
+      console.log("sUserId ", sUserId, "ПОЛУЧАЕМ СПИСОК ДИАЛОГОВ");
       // 1. Берем диалоги из Монги
       const dialogs = await Dialog.find({ participants: { $in: [sUserId] } })
         .sort({ updatedAt: -1 })
@@ -19,7 +20,6 @@ class ConversationController {
       );
 
       // 3. Запрос в Postgres (через Sequelize/Prisma или чистый SQL)
-      // Допустим, у тебя есть модель User для Postgres:
       const usersInfo = await User.findAll({
         where: { id: Array.from(allParticipantIds) },
         attributes: ["id", "username", "avatar_url"],
@@ -37,6 +37,8 @@ class ConversationController {
         ),
       }));
 
+      //console.log("DIALOG STATUS ", enrichedDialogs[0].lastMessage);
+
       res.json(enrichedDialogs);
     } catch (e) {
       console.error(e);
@@ -48,6 +50,8 @@ class ConversationController {
     try {
       const sUserId = String(userId);
       const sPartnerId = String(partnerId);
+
+      console.log("ПОЛУЧЕНИЕ ОДНОГО РАЗГОВОРА");
 
       // 1. Ищем конкретный диалог в MongoDB
       // Используем $all, чтобы найти документ, где есть оба участника
@@ -92,6 +96,8 @@ class ConversationController {
       const { userId, partnerId } = req.params;
       const sUserId = String(userId);
       const sPartnerId = String(partnerId);
+
+      console.log("ПОЛУЧЕНИЕ ОДНОГО РАЗГОВОРА API");
 
       // 1. Ищем диалог в MongoDB
       const dialog = await Dialog.findOne({

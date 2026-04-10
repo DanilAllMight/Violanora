@@ -1,8 +1,8 @@
+import { formatOnlineTime } from "../../lib/formatOnlineTime";
 import { useOnlineStore } from "../../model/store/useOnlineStore";
 import { useUserStore } from "../../model/store/useUserStore";
 import type { UserCardProps } from "../../model/types/userCard";
 import { UserAvatar } from "../UserAvatar/UserAvatar";
-import { useConversationStore } from "@/entities/Conversation/model/store/useConversationStore";
 import { MessageSquare } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -16,8 +16,6 @@ export const UserCard = ({ user }: UserCardProps) => {
 
   const handleClick = () => {
     if (myId) {
-      useConversationStore.getState().setPartnerUsername(user.username);
-      useConversationStore.getState().setDialogAvatar(user.avatar_url);
       navigate(`/chat/${user.id}/${user.username}`);
     } else {
       toast.error("Для отправки сообщений, нужно авторизироваться!");
@@ -37,13 +35,10 @@ export const UserCard = ({ user }: UserCardProps) => {
         </div>
         <div>
           <h2 className="text-app-text self-start">{user.username}</h2>
+          {isOnline && <span className="text-xs text-green-400">В сети</span>}
           {!isOnline && user.online_time && (
-            <span>
-              Был в сети в{" "}
-              {new Date(user.online_time).toLocaleTimeString("ru-RU", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
+            <span className="text-xs text-gray-400">
+              Был(а) в сети {formatOnlineTime(user.online_time)}
             </span>
           )}
         </div>

@@ -77,4 +77,22 @@ const Session = sequelize.define(
   },
 );
 
-module.exports = { User, Session };
+const PushSubscription = sequelize.define(
+  "pushsubscription",
+  {
+    userId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      unique: true, // Чтобы у одного юзера была одна запись
+    },
+    subscription: {
+      type: DataTypes.JSONB,
+      allowNull: false,
+    },
+  },
+  {
+    tableName: "user_subscriptions",
+  },
+);
+
+module.exports = { User, Session, PushSubscription };

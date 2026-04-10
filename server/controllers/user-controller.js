@@ -1,8 +1,9 @@
-const { User } = require("../models/models");
+const { User, Session } = require("../models/models");
 const bcrypt = require("bcrypt");
 const sharp = require("sharp");
 const { supabase } = require("../utils/supabase");
-const { where } = require("sequelize");
+const tokenService = require("../services/token-service");
+const logger = require("../utils/logger");
 
 class UserController {
   async registration(req, res) {
@@ -34,14 +35,33 @@ class UserController {
         username: username,
       });
       console.log("UserController :: registration :: Пользователь создан!");
+
+      const tokens = tokenService.generateTokens({
+        id: user.id,
+        email: user.email,
+      });
+
+      await tokenService.saveSession(
+        user.id,
+        tokens.refreshToken,
+        req.headers["user-agent"],
+        req.ip,
+      );
+
       const data = {
         user: {
           id: user.id,
-          token: "2222",
+          access_token: tokens.accessToken,
+          refresh_token: tokens.refreshToken,
           username: username,
           email: email,
         },
       };
+
+      res.cookie("refreshToken", tokens.refreshToken, {
+        maxAge: 30 * 24 * 60 * 60 * 1000,
+        httpOnly: true,
+      });
       res.json(data);
     } catch (error) {
       return res.status(500).json({
@@ -71,17 +91,34 @@ class UserController {
       });
     }
 
+    const tokens = tokenService.generateTokens({
+      id: candidate.id,
+      email: candidate.email,
+    });
+
+    await tokenService.saveSession(
+      candidate.id,
+      tokens.refreshToken,
+      req.headers["user-agent"],
+      req.ip,
+    );
+
     console.log("UserController :: login :: Пользователь вошёл!");
 
     const data = {
       user: {
         id: candidate.id,
-        token: "111111",
+        access_token: tokens.accessToken,
+        refresh_token: tokens.refreshToken,
         email: email,
         username: candidate.username,
         avatar_url: candidate.avatar_url,
       },
     };
+    res.cookie("refreshToken", tokens.refreshToken, {
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+      httpOnly: true,
+    });
     res.json(data);
   }
 
@@ -212,6 +249,86 @@ class UserController {
       res.json(usr);
     } else {
       res.status(400).json("Ошибка в данных");
+    }
+  }
+
+  async refresh(req, res) {
+    try {
+      // 1. Достаем refreshToken из кук
+      const { refreshToken } = req.cookies;
+
+      if (!refreshToken) {
+        return res.status(401).json({ message: "Токен отсутствует" });
+      }
+
+      // 2. Валидируем токен через сервис
+      const userData = tokenService.validateRefreshToken(refreshToken);
+      // 3. Проверяем наличие этой сессии в БД
+      const tokenFromDb = await Session.findOne({ where: { refreshToken } });
+
+      if (!userData || !tokenFromDb) {
+        return res
+          .status(401)
+          .json({ message: "Сессия не найдена или просрочена" });
+      }
+
+      // 4. Находим пользователя и создаем новые токены
+      const user = await User.findByPk(userData.id);
+      const tokens = tokenService.generateTokens({
+        id: user.id,
+        email: user.email,
+      });
+
+      // 5. Обновляем refreshToken в базе данных (старую сессию заменяем новой)
+      tokenFromDb.refreshToken = tokens.refreshToken;
+      await tokenFromDb.save();
+
+      // 6. Устанавливаем новую куку и отдаем данные
+      res.cookie("refreshToken", tokens.refreshToken, {
+        maxAge: 30 * 24 * 60 * 60 * 1000,
+        httpOnly: true,
+      });
+
+      // Возвращаем данные в том формате, который ожидает твой клиент
+      return res.json({
+        user: {
+          id: user.id,
+          access_token: tokens.accessToken,
+          refresh_token: tokens.refreshToken,
+          username: user.username,
+          email: user.email,
+        },
+      });
+    } catch (error) {
+      console.error(error);
+      return res.status(401).json({ message: "Ошибка авторизации" });
+    }
+  }
+
+  async logout(req, res) {
+    try {
+      // 1. Извлекаем Refresh Token из кук
+      const { refreshToken } = req.cookies;
+
+      console.log("LOGOUT ", refreshToken);
+      logger.debug("LOGOUT");
+
+      if (refreshToken) {
+        // 2. Удаляем сессию из таблицы в БД
+        await Session.destroy({ where: { refreshToken } });
+      }
+
+      // 3. Очищаем куку в браузере
+      // Важно: параметры (httpOnly) должны совпадать с теми, что были при установке
+      res.clearCookie("refreshToken", {
+        httpOnly: true,
+        // secure: true, // раскомментируй, если используешь https
+      });
+
+      return res.status(200).json({ message: "Вы успешно вышли из системы" });
+    } catch (error) {
+      console.error("Ошибка при выходе:", error);
+      return res.status(500).json({ message: "Произошла ошибка при выходе" });
     }
   }
 }

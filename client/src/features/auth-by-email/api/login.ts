@@ -13,7 +13,8 @@ export const loginByEmail = async (data: LoginFormData) => {
 
     useUserStore.getState().setAuthData(user);
 
-    localStorage.setItem("token", user.token);
+    localStorage.setItem("access_token", user.access_token);
+    localStorage.setItem("refresh_token", user.refresh_token);
     localStorage.setItem("email", user.email);
     localStorage.setItem("username", user.username);
 

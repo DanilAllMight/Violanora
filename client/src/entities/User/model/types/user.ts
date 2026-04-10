@@ -1,7 +1,8 @@
 export interface UserAuth {
   id: number;
   email: string;
-  token: string;
+  access_token: string;
+  refresh_token: string;
   username: string;
   avatar_url: string | null;
 }

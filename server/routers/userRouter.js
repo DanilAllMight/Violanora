@@ -7,6 +7,8 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 router.post("/login", userController.login);
 router.post("/registration", userController.registration);
+router.post("/refresh", userController.refresh);
+router.post("/logout", userController.logout);
 router.get("/users", userController.getUsers);
 router.post(
   "/upload-avatar",

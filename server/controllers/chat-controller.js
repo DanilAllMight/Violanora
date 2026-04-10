@@ -1,12 +1,13 @@
 const { Dialog } = require("../models/Dialog");
 const { Message } = require("../models/Message");
 const { findSocketByUserId } = require("../webSocket");
+const { getSingleConversation } = require("./conversation-controller");
 
 class ChatController {
   async getMessages(req, res) {
     try {
       const { senderId, receiverId } = req.params;
-      // Получаем из query-параметров (например, ?before=2023-10-01...&limit=20)
+      console.log("GET MESSAGES ", senderId, receiverId);
       const { before, limit = 20 } = req.query;
 
       const matchKey = [senderId, receiverId].sort().join("_");
@@ -14,10 +15,8 @@ class ChatController {
 
       if (!dialog) return res.json([]);
 
-      // Формируем фильтр
       const query = { dialogId: dialog._id };
 
-      // Если передан 'before' (дата или ID), ищем сообщения СТАРШЕ этого значения
       if (before) {
         query.createdAt = { $lt: new Date(before) };
       }
@@ -38,20 +37,34 @@ class ChatController {
       // Возвращаем в правильном хронологическом порядке для фронтенда
       const result = messages.reverse();
 
-      // Обнуляем счетчик только при первой загрузке (когда нет 'before')
       if (!before) {
         await Dialog.findByIdAndUpdate(dialog._id, {
-          $set: { [`unreadCount.${senderId}`]: 0 },
+          $set: {
+            [`unreadCount.${senderId}`]: 0,
+          },
+        });
+      }
+
+      if (
+        dialog.lastMessage &&
+        dialog.lastMessage.senderId.toString() === receiverId
+      ) {
+        await Dialog.findByIdAndUpdate(dialog._id, {
+          $set: { "lastMessage.status": "read" },
         });
       }
 
       // 2. Оповещаем партнера через сокет (если он онлайн)
+
       const partnerSocket = findSocketByUserId(receiverId);
+      console.log("RECEIVER ID", receiverId);
+      console.log("ПОЛУЧИЛИ СМС - ТЕПЕРЬ ГОВОРИМ ЧТО ПРОЧИТАЛИ");
       if (partnerSocket) {
         partnerSocket.send(
           JSON.stringify({
             type: "PARTNER_READ_MESSAGES",
-            senderId: senderId, // ID того, кто прочитал сообщения
+            senderId: senderId, // Кто прочитал
+            dialogId: dialog._id,
           }),
         );
       }

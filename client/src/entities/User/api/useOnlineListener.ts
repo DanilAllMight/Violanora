@@ -2,14 +2,15 @@ import { useOnlineStore } from "../model/store/useOnlineStore";
 import { useConversationListStore } from "@/entities/Conversation/model/store/useConversationListStore";
 import { useConversationStore } from "@/entities/Conversation/model/store/useConversationStore";
 import { useSocket } from "@/shared/api";
-import logger from "@/utils/logger";
 import { useEffect } from "react";
 
 export const useOnlineListener = (userId: number | undefined) => {
+  if (!userId) return;
   const { socket, subscribe } = useSocket(userId);
   const { setOnline, setOffline, setAllOnline } = useOnlineStore();
 
   useEffect(() => {
+    console.log("USE ONLINE LISTENER");
     const unsubscribe = subscribe((event) => {
       try {
         const data = JSON.parse(event.data);
@@ -21,47 +22,75 @@ export const useOnlineListener = (userId: number | undefined) => {
           setAllOnline(data.userIds.map(Number));
 
         if (data.type === "NEW_CONVERSATION") {
-          console.log("NEW_CONVERSATION");
-          useConversationListStore
-            .getState()
-            .setConversation(data.conversation);
+          console.log("NEW CONVERSATION");
+
+          const listStore = useConversationListStore.getState();
+          const conversation = data.conversation;
+
+          listStore.addConversation(conversation);
+        }
+
+        if (data.type === "PARTNER_READ_MESSAGES") {
+          console.log("Партнёр прочитал");
+          const listStore = useConversationListStore.getState();
+          const msgDialogId = String(data.dialogId);
+          console.log("DIALOG ID", msgDialogId);
+
+          // 1. Обновляем статус в боковой панели (ListStore)
+          if (msgDialogId) {
+            console.log("ОБНОВЛЯЕМ СТАТУС");
+            listStore.updateConversation(msgDialogId, {
+              lastMessage: { status: "read" },
+            });
+          }
         }
 
         // --- Логика НОВЫХ СООБЩЕНИЙ ---
         if (data.type === "NEW_MESSAGE") {
-          logger.info("Новое сообщение");
-          const store = useConversationStore.getState();
+          console.log("NEW MESSAGE");
+          const listStore = useConversationListStore.getState();
+          const activeStore = useConversationStore.getState();
+
           const msgDialogId = String(data.dialogId);
-          const currentActiveId = store.activeDialogId
-            ? String(store.activeDialogId)
-            : null;
+          const isCurrentChat = msgDialogId === activeStore.activeDialogId;
           const isMyOwnMessage = String(data.senderId) === String(userId);
 
-          // Обновляем текст сообщения в любом случае
-          store.setLastMessage(msgDialogId, data.text);
+          // 1. Просто обновляем текст и поднимаем чат вверх
+          listStore.updateConversation(msgDialogId, {
+            lastMessage: {
+              text: data.text,
+              senderId: data.senderId,
+              status: data.status || "sent",
+              createdAt: new Date().toISOString(),
+            },
+          });
 
-          console.log(
-            "MSGDiaolg currentId ",
-            msgDialogId,
-            " ",
-            currentActiveId,
-          );
-
-          // Если мы в этом чате прямо сейчас — просто шлем прочтение (даже если пишем сами себе)
-          if (msgDialogId === currentActiveId) {
-            if (socket && socket.readyState === WebSocket.OPEN) {
-              logger.info("Мы в этом чате");
-              socket.send(
-                JSON.stringify({ type: "MARK_AS_READ", dialogId: msgDialogId }),
-              );
-            }
-            return; // Выходим, так как чат открыт и счетчик инкрементировать не надо
+          // 2. Инкрементируем счетчик через атомарный метод стора
+          if (!isCurrentChat && !isMyOwnMessage) {
+            console.log("INCREMENT 0");
+            listStore.incrementUnread(msgDialogId, String(userId));
           }
 
-          // Если чат НЕ открыт и сообщение НЕ наше — только тогда увеличиваем счетчик
-          if (!isMyOwnMessage) {
-            //logger.info(`User NOT in chat ${msgDialogId}, incrementing badge`);
-            store.incrementUnread(msgDialogId);
+          // 3. Логика прочтения...
+          if (isCurrentChat && socket?.readyState === WebSocket.OPEN) {
+            socket.send(
+              JSON.stringify({ type: "MARK_AS_READ", dialogId: msgDialogId }),
+            );
+          }
+        }
+
+        if (data.type === "MESSAGES_READ") {
+          const listStore = useConversationListStore.getState();
+          // Обновляем статус последнего сообщения в списке чатов
+          listStore.updateConversation(data.dialogId, {
+            lastMessage: { status: "read" },
+          });
+
+          // Если это наш открытый чат — можно также обновить статус в сторе сообщений
+          if (
+            useConversationStore.getState().activeDialogId === data.dialogId
+          ) {
+            // логика обновления статуса сообщений на экране
           }
         }
 

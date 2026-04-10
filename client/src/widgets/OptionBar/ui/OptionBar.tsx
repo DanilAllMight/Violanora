@@ -1,5 +1,6 @@
 import { useThemeStore } from "@/entities/Theme/model/store/useThemeStore";
 import { useUserStore } from "@/entities/User/model/store/useUserStore";
+import { logout } from "@/features/logout";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { Menu, LogOut, Sun, Moon, Palette, ChevronRight } from "lucide-react";
 import { NavLink } from "react-router-dom";
@@ -9,7 +10,9 @@ export const OptionBar = () => {
   const toggleTheme = useThemeStore((state) => state.toggleTheme);
   const setAccent = useThemeStore((state) => state.setAccent);
 
-  const logout = () => {
+  const logout_ = () => {
+    console.log("OPTION LOG OUT");
+    logout();
     useUserStore.getState().logout();
   };
 
@@ -94,7 +97,7 @@ export const OptionBar = () => {
             <DropdownMenu.Item className="hover:bg-app-nav flex rounded-xl p-0 outline-none">
               <NavLink
                 to="/profile"
-                className="flex w-full items-center p-3 text-app-text"
+                className="text-app-text flex w-full items-center p-3"
               >
                 Личный кабинет
               </NavLink>
@@ -103,7 +106,7 @@ export const OptionBar = () => {
             <DropdownMenu.Item className="hover:bg-app-nav text-app-text flex items-center rounded-xl">
               <NavLink
                 to={"/message"}
-                className="flex w-full items-center p-3 text-app-text"
+                className="text-app-text flex w-full items-center p-3"
               >
                 Сообщения
               </NavLink>
@@ -112,8 +115,9 @@ export const OptionBar = () => {
             <DropdownMenu.Separator className="bg-app-icon my-1 h-[1px]" />
 
             <DropdownMenu.Item
-              onSelect={logout}
+              onSelect={logout_}
               className="flex cursor-pointer items-center rounded-xl p-3 text-red-500 outline-none hover:bg-red-50"
+              onClick={logout_}
             >
               <LogOut size={18} />
               Выйти

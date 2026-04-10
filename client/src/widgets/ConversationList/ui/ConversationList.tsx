@@ -17,12 +17,12 @@ export const ConversationList = () => {
     (state) => state.conversations,
   );
 
-  console.log("Диалоги.");
+  console.log("Диалоги. ", conversations);
 
   useEffect(() => {
     if (userId) {
       getConversations(userId);
-      console.log("hi");
+      console.log("hi ", conversations);
     }
   }, [getConversations, userId]);
 

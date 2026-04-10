@@ -31,8 +31,8 @@ export const ChatWidget = ({ userId: targetId }: ChatWidgetProps) => {
   const resetActiveDialog = useConversationStore(
     (state) => state.resetActiveDialog,
   );
-  const partner_avatar = useConversationStore((state) => state.partner_avatar);
-  const username = useConversationStore((state) => state.partner_username);
+  const partner_avatar = useConversationStore((state) => state.partner.avatar);
+  const username = useConversationStore((state) => state.partner.username);
 
   const { messages, sendMessage, fetchMoreMessages, hasMore, isLoading } =
     useConversationSocket(targetId);

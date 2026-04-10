@@ -1,4 +1,5 @@
 import { fetchMessages } from "../../api/fetchMessages";
+import { useConversationListStore } from "../store";
 import { useUserStore } from "@/entities/User/model/store";
 import { useSocket } from "@/shared/api";
 import logger from "@/utils/logger";
@@ -96,24 +97,24 @@ export const useConversationSocket = (targetId: string | undefined) => {
         }
 
         if (data.type === "PARTNER_READ_MESSAGES") {
-          console.log(
-            "СОБЕСЕДНИК ПРОЧИТАЛ, ",
-            targetId,
-            " ",
-            data.senderId,
-            " ",
-            data,
-          );
-          if (
-            String(data.senderId) === String(targetId) ||
-            String(data.senderId) === String(user?.id)
-          ) {
-            console.log("GOO ");
+          console.log("Партнёр прочитал");
+          const listStore = useConversationListStore.getState();
+          const msgDialogId = String(data.dialogId);
+
+          // 1. Обновляем статус в боковой панели (ListStore)
+          if (msgDialogId) {
+            console.log("ОБНОВЛЯЕМ СТАТУС 2");
+            listStore.updateConversation(msgDialogId, {
+              lastMessage: { status: "read" },
+            });
+          }
+
+          // 2. Ваша текущая логика обновления сообщений на экране
+          if (String(data.senderId) === String(targetId)) {
             setMessages((prev) =>
               prev.map((msg) =>
-                msg.senderId === user?.id || msg.senderId === targetId
-                  ? { ...msg, status: "read" }
-                  : msg,
+                // Если сообщение наше — помечаем прочитанным, так как партнер его открыл
+                msg.senderId === user?.id ? { ...msg, status: "read" } : msg,
               ),
             );
           }
@@ -128,6 +129,7 @@ export const useConversationSocket = (targetId: string | undefined) => {
 
   const sendMessage = (text: string) => {
     const tempId = Date.now().toString();
+    console.log("Отправили смс");
     if (socket?.readyState === WebSocket.OPEN) {
       socket.send(
         JSON.stringify({ to: targetId, text, type: "MESSAGE", tempId: tempId }),

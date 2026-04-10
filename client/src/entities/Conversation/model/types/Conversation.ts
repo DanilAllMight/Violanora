@@ -10,8 +10,9 @@ export interface Participant {
 }
 
 export interface LastMessage {
-  text: string;
-  senderId: string | number;
+  text?: string;
+  senderId?: string | number;
+  status: string;
   createdAt?: string;
 }
 

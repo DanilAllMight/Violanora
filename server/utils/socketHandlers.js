@@ -1,7 +1,7 @@
 const { Dialog } = require("../models/Dialog");
 const { Message } = require("../models/Message");
 const { User } = require("../models/models");
-const { sendPushNotification } = require("./firebase");
+const { sendNotificationToUser } = require("../services/notification-service");
 const logger = require("./logger");
 const WebSocket = require("ws");
 
@@ -44,12 +44,22 @@ function createHandlers(clients, onlineUsers, getSingleConversation) {
         },
         { $set: { status: "read" } },
       );
+      await Dialog.findByIdAndUpdate(data.dialogId, {
+        $set: { "lastMessage.status": "read" },
+      });
+
+      /*send(partner, {
+        type: "PARTNER_READ_MESSAGES",
+        senderId: senderId, // Кто прочитал
+        dialogId: dialog._id,
+      });*/
 
       logger.info("В том же чате");
-      console.log("PARTNER_READ_MESSAGES");
-      send(partner, {
+      console.log("PARTNER_READ_MESSAGES ", String(partner));
+      send(String(partner), {
         type: "PARTNER_READ_MESSAGES",
         senderId: userId,
+        dialogId: data.dialogId,
       });
       if (ws.readyState === WebSocket.OPEN) {
         console.log("PARTNER_READ_MESSAGES  2 ");
@@ -57,6 +67,7 @@ function createHandlers(clients, onlineUsers, getSingleConversation) {
           JSON.stringify({
             type: "PARTNER_READ_MESSAGES",
             senderId: userId,
+            dialogId: data.dialogId,
           }),
         );
       }
@@ -79,6 +90,7 @@ function createHandlers(clients, onlineUsers, getSingleConversation) {
           $set: {
             "lastMessage.text": text,
             "lastMessage.senderId": sUserId,
+            "lastMessage.status": "sent",
           },
         };
 
@@ -92,10 +104,10 @@ function createHandlers(clients, onlineUsers, getSingleConversation) {
           { upsert: true, new: true },
         );
 
-        const fullConv = await getSingleConversation(sUserId, sTo);
+        /*const fullConv = await getSingleConversation(sUserId, sTo);
         [sUserId, sTo].forEach((id) => {
           send(id, { type: "NEW_CONVERSATION", conversation: fullConv });
-        });
+        });*/
 
         const newMessage = await Message.create({
           dialogId: dialog._id,
@@ -104,11 +116,11 @@ function createHandlers(clients, onlineUsers, getSingleConversation) {
           receiverId: sTo,
         });
 
-        console.log(`📩 Сообщение сохранено в диалог ${dialog._id}`);
+        console.log(`📩 Сообщение сохранено в диалог ${dialog._id} ${text}`);
 
         const user = await User.findByPk(sTo);
         const sender = await User.findByPk(sUserId);
-        console.log("FCM TOKEN USER ", user);
+        //console.log("FCM TOKEN USER ", user);
 
         send(sTo, {
           type: "NEW_MESSAGE",
@@ -119,9 +131,12 @@ function createHandlers(clients, onlineUsers, getSingleConversation) {
           createdAt: newMessage.createdAt,
         });
 
-        /*sendPushNotification(user.fcmToken, sender.username, text, {
-          dialogId: String(newMessage.dialogId),
-        });*/
+        await sendNotificationToUser(
+          sTo,
+          "Новое сообщение",
+          `Вам написал ${"Ктото"}: ${text}`,
+          "/chat", // ссылка куда перейдет юзер при клике
+        );
 
         if (ws.readyState === WebSocket.OPEN) {
           console.log("SENT_CONFIRMED");

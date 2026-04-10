@@ -4,11 +4,59 @@ import { toast } from "sonner";
 
 export const $api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "/",
+  withCredentials: true,
+});
+
+$api.interceptors.request.use((config) => {
+  // Достаем токен из localStorage (или где ты его хранишь)
+  const token = localStorage.getItem("access_token");
+
+  if (token && config.headers) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  return config;
 });
 
 $api.interceptors.response.use(
   (res) => res,
-  (error) => {
+  async (error) => {
+    // Добавили async для работы с await
+    const originalRequest = error.config;
+
+    // --- ЛОГИКА REFRESH TOKEN (НОВОЕ) ---
+    // Если ошибка 401 и мы еще не пытались повторить этот запрос
+    if (
+      error.response?.status === 401 &&
+      originalRequest &&
+      !originalRequest._isRetry
+    ) {
+      originalRequest._isRetry = true;
+      try {
+        // Делаем запрос на обновление. Используем базовый axios, чтобы не зациклиться.
+        // Замени URL на свой, если он отличается
+        const response = await axios.get(
+          `${import.meta.env.VITE_API_URL}/api/refresh`,
+          {
+            withCredentials: true,
+          },
+        );
+
+        // Сохраняем новый токен из твоего формата данных
+        const newToken = response.data.user.access_token;
+        localStorage.setItem("access_token", newToken);
+
+        // Повторяем оригинальный запрос
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        return $api.request(originalRequest);
+      } catch (refreshError) {
+        // Если даже refresh не удался — просто идем дальше к твоему коду ошибок
+        logger.error("Не удалось обновить токен сессии");
+      }
+    }
+    // --- КОНЕЦ ЛОГИКИ REFRESH ---
+
+    // Твой оригинальный код (БЕЗ ИЗМЕНЕНИЙ)
     if (!error.response) {
       const networkError = "Сервер недоступен. Работы уже ведутся!";
 
