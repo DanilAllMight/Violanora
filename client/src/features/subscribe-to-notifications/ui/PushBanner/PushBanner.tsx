@@ -8,28 +8,57 @@ interface PushBannerProps {
   isAuth: boolean;
 }
 
-// Укажите пропсы в аргументах функции
+const BANNER_STORAGE_KEY = "push_banner_dismissed";
+
 export const PushBanner = ({ isAuth }: PushBannerProps) => {
   const [isVisible, setIsVisible] = useState(false);
   const { subscribe } = usePushSubscription();
 
   useEffect(() => {
-    // Проверяем авторизацию и статус разрешения
-    if (isAuth && Notification.permission === "default") {
-      const isDismissed = sessionStorage.getItem("push_banner_dismissed");
-      if (!isDismissed) {
+    // Проверка на наличие API уведомлений (защита от ошибок в старых браузерах)
+    if (typeof window === "undefined" || !("Notification" in window)) return;
+
+    const checkVisibility = () => {
+      // Баннер нужен только если:
+      // 1. Пользователь авторизован
+      // 2. Статус уведомлений "default" (еще не разрешил и не запретил)
+      // 3. Он не закрывал этот баннер ранее (проверяем localStorage)
+      const isDismissed = localStorage.getItem(BANNER_STORAGE_KEY);
+      const isDefaultPermission = Notification.permission === "default";
+
+      if (isAuth && isDefaultPermission && !isDismissed) {
         setIsVisible(true);
+      } else {
+        setIsVisible(false);
       }
-    }
-  }, [isAuth]); // Добавляем isAuth в зависимости
+    };
+
+    // Небольшая задержка помогает мобильным браузерам корректно определить статус Notification.permission
+    const timer = setTimeout(checkVisibility, 1000);
+
+    return () => clearTimeout(timer);
+  }, [isAuth]);
 
   const handleSubscribe = async () => {
-    const success = await subscribe();
-    if (success) setIsVisible(false);
+    try {
+      // Запрашиваем разрешение
+      const permission = await Notification.requestPermission();
+
+      if (permission === "granted") {
+        await subscribe();
+        setIsVisible(false);
+      } else if (permission === "denied") {
+        // Если пользователь нажал "Блокировать" в системном окне, скрываем баннер
+        setIsVisible(false);
+      }
+    } catch (error) {
+      console.error("Ошибка при подписке:", error);
+    }
   };
 
   const handleDismiss = () => {
-    sessionStorage.setItem("push_banner_dismissed", "true");
+    // Используем localStorage, чтобы баннер не всплывал после перезагрузки
+    localStorage.setItem(BANNER_STORAGE_KEY, "true");
     setIsVisible(false);
   };
 
@@ -47,8 +76,7 @@ export const PushBanner = ({ isAuth }: PushBannerProps) => {
               Включить уведомления?
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Вы будете получать сообщения о новых событиях, даже когда вкладка
-              закрыта.
+              Вы будете получать сообщения, даже когда вкладка закрыта.
             </p>
           </div>
         </div>
