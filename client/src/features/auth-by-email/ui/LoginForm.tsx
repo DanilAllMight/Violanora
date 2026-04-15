@@ -1,7 +1,7 @@
-import { loginByEmail } from "../../api/login";
-import { loginSchema, type LoginFormData } from "../../model/types";
-import { Button } from "@/shared/ui/button/button";
-import { Input } from "@/shared/ui/input/input";
+import { loginByEmail } from "../api/login";
+import { loginSchema, type LoginFormData } from "../model/types";
+import { Button } from "@/shared/ui/Button/button";
+import { Input } from "@/shared/ui/Input/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";

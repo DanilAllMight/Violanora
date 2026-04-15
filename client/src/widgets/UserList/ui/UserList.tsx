@@ -1,7 +1,7 @@
 import { useUsersListStore } from "@/entities/User/model/store/useUserListStore";
 import { UserCard } from "@/entities/User/ui";
 import { PageLoader } from "@/shared/ui";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/Button/button";
 import { RefreshCw } from "lucide-react";
 import { useEffect } from "react";
 

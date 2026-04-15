@@ -1,8 +1,8 @@
 import { useConversationListStore } from "@/entities/Conversation/model/store";
 import { ConversationCard } from "@/entities/Conversation/ui";
 import { useUserStore } from "@/entities/User/model/store/useUserStore";
-import { Button } from "@/shared/ui/button/button";
-import { Input } from "@/shared/ui/input/input";
+import { Button } from "@/shared/ui/Button/button";
+import { Input } from "@/shared/ui/Input/input";
 import { Loader2, RefreshCw } from "lucide-react";
 import { Search, X } from "lucide-react";
 import { useEffect, useState } from "react";

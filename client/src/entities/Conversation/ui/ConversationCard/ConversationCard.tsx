@@ -1,6 +1,6 @@
-import { useConversationListStore } from "../model/store";
-import { useConversationStore } from "../model/store/useConversationStore";
-import type { ConversationCardProps } from "../model/types/ConversationCard";
+import { useConversationListStore } from "../../model/store";
+import { useConversationStore } from "../../model/store/useConversationStore";
+import type { ConversationCardProps } from "../../model/types/ConversationCard";
 import { useOnlineStore } from "@/entities/User/model/store/useOnlineStore";
 import { useUserStore } from "@/entities/User/model/store/useUserStore";
 import { UserAvatar } from "@/entities/User/ui/UserAvatar/UserAvatar";

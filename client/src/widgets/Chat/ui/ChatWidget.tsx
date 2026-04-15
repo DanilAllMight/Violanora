@@ -1,5 +1,5 @@
-import { ChatFooter } from "../ChatFooter/ChatFooter";
-import { ChatHeader } from "../ChatHeader/ChatHeader";
+import { ChatFooter } from "./ChatFooter";
+import { ChatHeader } from "./ChatHeader";
 import { useConversationSocket } from "@/entities/Conversation/model/hooks/useConversationSocket";
 import { useConversationStore } from "@/entities/Conversation/model/store/useConversationStore";
 import { MessageList } from "@/entities/Message/ui";

@@ -1,6 +1,6 @@
 import { uploadAvatar } from "@/entities/User/api/uploadAvatar";
 import { useUserStore } from "@/entities/User/model/store/useUserStore";
-import { ProfileAvatar } from "@/features/profile-avatar/ui/ProfileAvatar/ProfileAvatar";
+import { ProfileAvatar } from "@/features/profile-avatar/ui/ProfileAvatar";
 import { ProfileEditForm } from "@/features/profile-info";
 import { Pencil, X } from "lucide-react";
 import { useState } from "react";

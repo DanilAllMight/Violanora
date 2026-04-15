@@ -1,5 +1,5 @@
-import { updateProfileData } from "../../api/updateProfileData";
-import { profileSchema, type ProfileFormData } from "../../model/types";
+import { updateProfileData } from "../api/updateProfileData";
+import { profileSchema, type ProfileFormData } from "../model/types";
 import { useUserStore } from "@/entities/User/model/store";
 import { Button, Input } from "@/shared/ui";
 import { zodResolver } from "@hookform/resolvers/zod";

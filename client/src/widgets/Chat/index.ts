@@ -1,3 +1,3 @@
-export { ChatWidget } from "./ui/ChatWidget/ChatWidget";
-export { ChatHeader } from "./ui/ChatHeader/ChatHeader";
-export { ChatFooter } from "./ui/ChatFooter/ChatFooter";
+export { ChatWidget } from "./ui/ChatWidget";
+export { ChatHeader } from "./ui/ChatHeader";
+export { ChatFooter } from "./ui/ChatFooter";

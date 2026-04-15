@@ -1,3 +1,4 @@
-export { Button } from "./button/button";
-export { Input } from "./input/input";
+export { Button } from "./Button/button";
+export { Input } from "./Input/input";
 export { PageLoader } from "./PageLoader/PageLoader";
+export { VideoPlayer } from "./VideoPlayer/VideoPlayer";

@@ -2,7 +2,7 @@ import { AppRouter } from "@/app/providers/router/ui/AppRouter";
 import { useOnlineListener } from "@/entities/User/api/useOnlineListener";
 import { useUserStore } from "@/entities/User/model/store/useUserStore";
 import { usePushSubscription } from "@/features/subscribe-to-notifications";
-import { PushBanner } from "@/features/subscribe-to-notifications/ui/PushBanner/PushBanner";
+import { PushBanner } from "@/features/subscribe-to-notifications/ui/PushBanner";
 import { $api } from "@/shared/api";
 import { PageLoader } from "@/shared/ui";
 import { NavBar } from "@/widgets/NavBar";
@@ -83,9 +83,6 @@ function App() {
 
   return (
     <div className="bg-app-bg flex h-full w-full flex-col font-sans">
-      {/* 
-          ВАЖНО: Добавили задержку появления и убрали стандартные стили для custom 
-      */}
       <Toaster
         position="top-right"
         visibleToasts={5}

@@ -1,5 +1,5 @@
 // features/push-notifications/ui/PushBanner/PushBanner.tsx
-import { usePushSubscription } from "../../model/hooks/usePushSubscriprion";
+import { usePushSubscription } from "../model/hooks/usePushSubscriprion";
 import * as AccessibleIcon from "@radix-ui/react-accessible-icon";
 import { BellIcon, Cross2Icon } from "@radix-ui/react-icons";
 import { useState, useEffect } from "react";

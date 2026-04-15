@@ -1,1 +1,1 @@
-export { ConversationCard } from "./ConversationCard";
+export { ConversationCard } from "./ConversationCard/ConversationCard";
