@@ -1,4 +1,4 @@
-import { AdminUserCard } from "./AdminUserCard";
+import { AdminUserCard } from "../AdminUserCard/AdminUserCard";
 import { useUsersListStore } from "@/entities/User/model/store";
 import { Button, PageLoader } from "@/shared/ui";
 import { RefreshCw } from "lucide-react";

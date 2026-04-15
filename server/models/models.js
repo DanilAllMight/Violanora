@@ -12,9 +12,9 @@ const User = sequelize.define(
     },
     email: {
       type: DataTypes.STRING,
-      unique: true, // Чтобы не было дублей
-      allowNull: false, // Обязательное поле
-      validate: { isEmail: true }, // Валидация формата
+      unique: true,
+      allowNull: false,
+      validate: { isEmail: true },
     },
     hashpassword: {
       type: DataTypes.STRING,
@@ -26,8 +26,8 @@ const User = sequelize.define(
       unique: true,
     },
     avatar_url: {
-      type: DataTypes.TEXT, // Используем TEXT, так как ссылка может быть длинной
-      allowNull: true, // По умолчанию у пользователя может не быть аватара
+      type: DataTypes.TEXT,
+      allowNull: true,
     },
     fcmToken: {
       type: DataTypes.STRING,
@@ -44,12 +44,12 @@ const User = sequelize.define(
     },
     deletedAt: {
       type: DataTypes.DATE,
-      allowNull: true, // По умолчанию null, пока юзер не удален
+      allowNull: true,
     },
   },
   {
-    timestamps: true, // Включает createdAt и updatedAt
-    paranoid: true, // Включает логику Soft Delete (использует поле deletedAt)
+    timestamps: true,
+    paranoid: true,
   },
 );
 
@@ -65,12 +65,12 @@ const Session = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: "users", // Имя таблицы юзеров
+        model: "users",
         key: "id",
       },
     },
     refreshToken: {
-      type: DataTypes.TEXT, // Используем TEXT для длинных JWT
+      type: DataTypes.TEXT,
       allowNull: false,
     },
     deviceInfo: {
@@ -89,7 +89,7 @@ const Session = sequelize.define(
   {
     // Настройки модели
     tableName: "sessions",
-    timestamps: true, // Создаст updatedAt и createdAt автоматически
+    timestamps: true,
   },
 );
 
@@ -99,7 +99,7 @@ const PushSubscription = sequelize.define(
     userId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      unique: true, // Чтобы у одного юзера была одна запись
+      unique: true,
     },
     subscription: {
       type: DataTypes.JSONB,
