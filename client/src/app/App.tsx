@@ -27,9 +27,6 @@ function App() {
         if (event.data?.type === "PUSH_RECEIVED") {
           const { title, body, url } = event.data.payload;
 
-          // ПРОВЕРКА: Если текущий путь совпадает с url из уведомления
-          // Например: url = "/chat/123" и location.pathname = "/chat/123"
-
           console.log("URL ", url);
 
           if (location.pathname === url) {
@@ -51,6 +48,7 @@ function App() {
   }, [location.pathname]);
 
   useEffect(() => {
+    console.log("USE EFFECT APP TSX");
     const check = async () => {
       if (isAuth) {
         try {
@@ -61,7 +59,16 @@ function App() {
     };
 
     const syncSubscription = async () => {
+      let permission = Notification.permission;
+
+      // Если еще не спрашивали — спрашиваем
+      if (permission === "default") {
+        permission = await Notification.requestPermission();
+      }
+
+      console.log("CURRENT PERMISSION:", permission);
       if (isAuth && Notification.permission === "granted") {
+        console.log("START SUBSCRIBE");
         await subscribe();
       }
     };
