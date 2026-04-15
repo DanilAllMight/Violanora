@@ -4,6 +4,7 @@ import { useConversationSocket } from "@/entities/Conversation/model/hooks/useCo
 import { useConversationStore } from "@/entities/Conversation/model/store/useConversationStore";
 import { MessageList } from "@/entities/Message/ui";
 import { useUserStore } from "@/entities/User/model/store/useUserStore";
+import { CallOverlay } from "@/features/video-call/ui/CallOverlay";
 import { useSocket } from "@/shared/api/socket/useSocket";
 import { useState, useRef, useLayoutEffect, useEffect } from "react";
 
@@ -34,8 +35,17 @@ export const ChatWidget = ({ userId: targetId }: ChatWidgetProps) => {
   const partner_avatar = useConversationStore((state) => state.partner.avatar);
   const username = useConversationStore((state) => state.partner.username);
 
-  const { messages, sendMessage, fetchMoreMessages, hasMore, isLoading } =
-    useConversationSocket(targetId);
+  const {
+    messages,
+    sendMessage,
+    fetchMoreMessages,
+    hasMore,
+    isLoading,
+    //startCall,
+    localStream,
+    remoteStream,
+    hangUp,
+  } = useConversationSocket(targetId);
 
   const typingUsers = useConversationStore((state) => state.typingUsers);
   const isTyping = typingUsers.has(String(targetId));
@@ -130,6 +140,14 @@ export const ChatWidget = ({ userId: targetId }: ChatWidgetProps) => {
         username={username}
         partner_avatar={partner_avatar}
       ></ChatHeader>
+
+      {(localStream || remoteStream) && (
+        <CallOverlay
+          localStream={localStream}
+          remoteStream={remoteStream}
+          onHangUp={hangUp}
+        />
+      )}
 
       <div
         ref={scrollRef}

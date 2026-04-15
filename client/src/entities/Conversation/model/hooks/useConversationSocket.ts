@@ -3,7 +3,7 @@ import { useConversationListStore } from "../store";
 import { useUserStore } from "@/entities/User/model/store";
 import { useSocket } from "@/shared/api";
 import logger from "@/utils/logger";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 
 export const useConversationSocket = (targetId: string | undefined) => {
   const [messages, setMessages] = useState<any[]>([]);
@@ -14,6 +14,50 @@ export const useConversationSocket = (targetId: string | undefined) => {
 
   const user = useUserStore((state) => state.authData);
   const { socket, subscribe } = useSocket(user?.id);
+
+  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+  const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
+  const pc = useRef<RTCPeerConnection | null>(null);
+
+  const setupPeer = useCallback(
+    (id: string) => {
+      const peer = new RTCPeerConnection({
+        iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+      });
+
+      peer.onicecandidate = (event) => {
+        if (event.candidate && socket?.readyState === WebSocket.OPEN) {
+          socket.send(
+            JSON.stringify({
+              type: "ice-candidate",
+              to: id,
+              payload: event.candidate,
+            }),
+          );
+        }
+      };
+
+      peer.ontrack = (event) => {
+        const stream = event.streams[0];
+        console.log("📍 ПОЛУЧЕН ПОТОК ОТ СОБЕСЕДНИКА:", stream.id);
+        console.log("🔊 Аудио-треков найдено:", stream.getAudioTracks().length);
+
+        if (stream.getAudioTracks().length > 0) {
+          const audioTrack = stream.getAudioTracks()[0];
+          console.log("📊 Статус звука:", {
+            enabled: audioTrack.enabled, // Должно быть true
+            readyState: audioTrack.readyState, // Должно быть 'live'
+          });
+        }
+
+        setRemoteStream(stream);
+      };
+
+      pc.current = peer;
+      return peer;
+    },
+    [socket],
+  );
 
   // 1. Начальная загрузка (самые свежие 20-30 сообщений)
   const getMsgs = useCallback(async () => {
@@ -33,6 +77,19 @@ export const useConversationSocket = (targetId: string | undefined) => {
       setIsLoading(false);
     }
   }, [targetId, user?.id]);
+
+  const hangUp = () => {
+    // Останавливаем камеру и микрофон
+    localStream?.getTracks().forEach((track) => track.stop());
+    // Закрываем соединение
+    pc.current?.close();
+    pc.current = null;
+    // Сбрасываем стейты
+    setLocalStream(null);
+    setRemoteStream(null);
+
+    // (Опционально) Отправьте сообщение 'hangup' через сокет, чтобы у партнера тоже закрылось окно
+  };
 
   // 2. Функция для подгрузки СТАРЫХ сообщений при скролле
   const fetchMoreMessages = useCallback(async () => {
@@ -70,9 +127,63 @@ export const useConversationSocket = (targetId: string | undefined) => {
     setHasMore(true);
     getMsgs();
 
-    const unsubscribe = subscribe((event) => {
+    const unsubscribe = subscribe(async (event) => {
       try {
         const data = JSON.parse(event.data);
+
+        if (data.type === "offer") {
+          console.log("Входящий звонок...");
+          const peer = setupPeer(data.from);
+          console.log("peer ", peer);
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: true,
+          });
+          console.log("stream ", stream);
+          setLocalStream(stream);
+          stream.getTracks().forEach((track) => peer.addTrack(track, stream));
+
+          await peer.setRemoteDescription(
+            new RTCSessionDescription(data.payload),
+          );
+          const answer = await peer.createAnswer();
+          await peer.setLocalDescription(answer);
+
+          if (socket?.readyState === WebSocket.OPEN) {
+            socket?.send(
+              JSON.stringify({
+                type: "answer",
+                to: data.from,
+                payload: answer,
+              }),
+            );
+          }
+        }
+
+        if (data.type === "answer") {
+          await pc.current?.setRemoteDescription(
+            new RTCSessionDescription(data.payload),
+          );
+        }
+
+        if (data.type === "ice-candidate") {
+          // Добавляем проверку: если описание еще не установлено, просто игнорируем кандидата (или ждем)
+          if (pc.current && pc.current.remoteDescription && data.payload) {
+            try {
+              await pc.current.addIceCandidate(
+                new RTCIceCandidate(data.payload),
+              );
+            } catch (e) {
+              console.error("Ошибка добавления ICE кандидата:", e);
+            }
+          } else {
+            // Можно складывать их во временный массив, но для теста достаточно просто пропустить
+            console.warn(
+              "Кандидат получен раньше, чем установилось соединение. Пропускаем.",
+            );
+          }
+        }
+
         if (data.type === "NEW_MESSAGE") {
           if (
             String(data.senderId) === String(targetId) &&
@@ -120,12 +231,37 @@ export const useConversationSocket = (targetId: string | undefined) => {
           }
         }
       } catch (e) {
+        console.error("ПОЛНАЯ ОШИБКА", e);
         logger.error(e, "Error parsing socket message");
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      // Очистка потоков при выходе
+      localStream?.getTracks().forEach((t) => t.stop());
+      pc.current?.close();
+    };
   }, [targetId, user?.id, subscribe, getMsgs]);
+
+  const startCall = async () => {
+    console.log("ЗАЯВОЧКА НА ЗВОНОК");
+    if (!targetId) return;
+    const peer = setupPeer(targetId);
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: true,
+      audio: true,
+    });
+    setLocalStream(stream);
+    stream.getTracks().forEach((track) => peer.addTrack(track, stream));
+
+    const offer = await peer.createOffer();
+    await peer.setLocalDescription(offer);
+    console.log("ЗАЯВОЧКА НА ЗВОНОК ОТПРАВЛЯЕТСЯ");
+    socket?.send(
+      JSON.stringify({ type: "offer", to: targetId, payload: offer }),
+    );
+  };
 
   const sendMessage = (text: string) => {
     const tempId = Date.now().toString();
@@ -149,5 +285,15 @@ export const useConversationSocket = (targetId: string | undefined) => {
   };
 
   // Возвращаем функцию fetchMoreMessages наружу для компонента списка
-  return { messages, sendMessage, fetchMoreMessages, hasMore, isLoading };
+  return {
+    messages,
+    sendMessage,
+    fetchMoreMessages,
+    hasMore,
+    isLoading,
+    startCall,
+    localStream,
+    remoteStream,
+    hangUp,
+  };
 };

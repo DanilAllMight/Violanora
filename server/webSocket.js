@@ -108,6 +108,28 @@ function setupWebSocket(server) {
           case "MESSAGE":
             await handlers.handleMessage(ws, userId, data);
             break;
+
+          case "offer":
+          case "answer":
+          case "ice-candidate":
+            // Используем data вместо message, так как у тебя выше const data = JSON.parse(rawData);
+            const targetClient = clients.get(String(data.to));
+
+            if (targetClient && targetClient.readyState === WebSocket.OPEN) {
+              targetClient.send(
+                JSON.stringify({
+                  type: data.type, // offer, answer или ice-candidate
+                  payload: data.payload,
+                  from: userId, // userId мы получили выше из URL при коннекте
+                }),
+              );
+              console.log(
+                `📡 Сигнал ${data.type} переслан от ${userId} к ${data.to}`,
+              );
+            } else {
+              console.log(` reference: Пользователь ${data.to} не в сети`);
+            }
+            break;
         }
       } catch (e) {
         console.error("❌ Ошибка WS:", e);

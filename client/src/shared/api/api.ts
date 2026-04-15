@@ -1,5 +1,7 @@
+import { useUserStore } from "@/entities/User/model/store";
 import logger from "@/utils/logger";
 import axios from "axios";
+import { type InternalAxiosRequestConfig } from "axios";
 import { toast } from "sonner";
 
 export const $api = axios.create({
@@ -7,8 +9,27 @@ export const $api = axios.create({
   withCredentials: true,
 });
 
+// Тип для элементов очереди
+interface FailedRequest {
+  resolve: (token: string) => void;
+  reject: (error: any) => void;
+}
+
+let isRefreshing = false;
+let failedQueue: FailedRequest[] = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token!);
+    }
+  });
+  failedQueue = [];
+};
+
 $api.interceptors.request.use((config) => {
-  // Достаем токен из localStorage (или где ты его хранишь)
   const token = localStorage.getItem("access_token");
 
   if (token && config.headers) {
@@ -21,42 +42,54 @@ $api.interceptors.request.use((config) => {
 $api.interceptors.response.use(
   (res) => res,
   async (error) => {
-    // Добавили async для работы с await
-    const originalRequest = error.config;
+    const originalRequest = error.config as InternalAxiosRequestConfig & {
+      _isRetry?: boolean;
+    };
 
-    // --- ЛОГИКА REFRESH TOKEN (НОВОЕ) ---
-    // Если ошибка 401 и мы еще не пытались повторить этот запрос
     if (
       error.response?.status === 401 &&
       originalRequest &&
       !originalRequest._isRetry
     ) {
+      if (isRefreshing) {
+        return new Promise<string>((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return $api(originalRequest);
+          })
+          .catch((err) => Promise.reject(err));
+      }
+
       originalRequest._isRetry = true;
+      isRefreshing = true;
       try {
-        // Делаем запрос на обновление. Используем базовый axios, чтобы не зациклиться.
-        // Замени URL на свой, если он отличается
-        const response = await axios.get(
-          `${import.meta.env.VITE_API_URL}/api/refresh`,
+        const response = await axios.post(
+          `${import.meta.env.VITE_API_URL}/api/user/refresh`,
+          {},
           {
             withCredentials: true,
           },
         );
 
-        // Сохраняем новый токен из твоего формата данных
+        console.log("ЗАПРОС ОТПРАВЛЕН И ПРИНЯТ ", response);
+
         const newToken = response.data.user.access_token;
         localStorage.setItem("access_token", newToken);
+        useUserStore.getState().setAuthData(response.data.user);
 
-        // Повторяем оригинальный запрос
+        processQueue(null, newToken);
+
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return $api.request(originalRequest);
       } catch (refreshError) {
-        // Если даже refresh не удался — просто идем дальше к твоему коду ошибок
-        logger.error("Не удалось обновить токен сессии");
+        processQueue(refreshError, null);
+        useUserStore.getState().logout();
+        return Promise.reject(refreshError);
       }
     }
-    // --- КОНЕЦ ЛОГИКИ REFRESH ---
 
-    // Твой оригинальный код (БЕЗ ИЗМЕНЕНИЙ)
     if (!error.response) {
       const networkError = "Сервер недоступен. Работы уже ведутся!";
 

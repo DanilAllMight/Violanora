@@ -10,6 +10,9 @@ export const OptionBar = () => {
   const toggleTheme = useThemeStore((state) => state.toggleTheme);
   const setAccent = useThemeStore((state) => state.setAccent);
 
+  const userRole = useUserStore((state) => state.authData?.role) || "USER";
+  const isAdmin = userRole == "ADMIN";
+
   const logout_ = () => {
     console.log("OPTION LOG OUT");
     logout();
@@ -113,6 +116,21 @@ export const OptionBar = () => {
             </DropdownMenu.Item>
 
             <DropdownMenu.Separator className="bg-app-icon my-1 h-[1px]" />
+
+            {isAdmin && (
+              <DropdownMenu.Item className="hover:bg-app-nav text-app-text flex items-center rounded-xl">
+                <NavLink
+                  to={"/admin"}
+                  className="text-app-text flex w-full items-center p-3"
+                >
+                  Админ-панель
+                </NavLink>
+              </DropdownMenu.Item>
+            )}
+
+            {isAdmin && (
+              <DropdownMenu.Separator className="bg-app-icon my-1 h-[1px]" />
+            )}
 
             <DropdownMenu.Item
               onSelect={logout_}

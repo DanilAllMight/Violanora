@@ -4,6 +4,7 @@ const sharp = require("sharp");
 const { supabase } = require("../utils/supabase");
 const tokenService = require("../services/token-service");
 const logger = require("../utils/logger");
+const { where } = require("sequelize");
 
 class UserController {
   async registration(req, res) {
@@ -55,6 +56,7 @@ class UserController {
           refresh_token: tokens.refreshToken,
           username: username,
           email: email,
+          role: user.role,
         },
       };
 
@@ -91,6 +93,12 @@ class UserController {
       });
     }
 
+    await tokenService.deleteSession(
+      candidate.id,
+      req.headers["user-agent"],
+      req.ip,
+    );
+
     const tokens = tokenService.generateTokens({
       id: candidate.id,
       email: candidate.email,
@@ -113,6 +121,7 @@ class UserController {
         email: email,
         username: candidate.username,
         avatar_url: candidate.avatar_url,
+        role: candidate.role,
       },
     };
     res.cookie("refreshToken", tokens.refreshToken, {
@@ -126,12 +135,47 @@ class UserController {
     try {
       console.log("UserController :: getUsers");
       const users = await User.findAndCountAll({
-        attributes: ["id", "email", "username", "avatar_url", "online_time"],
+        attributes: [
+          "id",
+          "email",
+          "username",
+          "avatar_url",
+          "online_time",
+          "role",
+        ],
       });
       //console.log("users ", users);
       const data = { users: users.rows, count: users.count };
       return res.json(data);
     } catch (err) {
+      return res.status(500).json({
+        message: "Ошибка получения списка пользователей!",
+      });
+    }
+  }
+
+  async getUsersForAdmin(req, res) {
+    try {
+      console.log("UserController :: getUsers for Admin", req.role);
+      const isAdmin = req.role === "ADMIN";
+      const users = await User.findAndCountAll({
+        attributes: [
+          "id",
+          "email",
+          "username",
+          "avatar_url",
+          "online_time",
+          "role",
+          "deletedAt",
+        ],
+        paranoid: !isAdmin, // Если админ, то paranoid: false (покажет всех)
+      });
+
+      //console.log("users ", users);
+      const data = { users: users.rows, count: users.count };
+      return res.json(data);
+    } catch (err) {
+      console.log(err);
       return res.status(500).json({
         message: "Ошибка получения списка пользователей!",
       });
@@ -274,6 +318,9 @@ class UserController {
 
       // 4. Находим пользователя и создаем новые токены
       const user = await User.findByPk(userData.id);
+
+      console.log("ПОЛЬЗОВАТЕЛЬ НАЙДЕН? ", user);
+
       const tokens = tokenService.generateTokens({
         id: user.id,
         email: user.email,
@@ -289,6 +336,8 @@ class UserController {
         httpOnly: true,
       });
 
+      console.log("ДОШЛИ ДО СЮДА ", tokens);
+
       // Возвращаем данные в том формате, который ожидает твой клиент
       return res.json({
         user: {
@@ -297,6 +346,8 @@ class UserController {
           refresh_token: tokens.refreshToken,
           username: user.username,
           email: user.email,
+          role: user.role,
+          avatar_url: user.avatar_url,
         },
       });
     } catch (error) {
@@ -329,6 +380,63 @@ class UserController {
     } catch (error) {
       console.error("Ошибка при выходе:", error);
       return res.status(500).json({ message: "Произошла ошибка при выходе" });
+    }
+  }
+
+  async check(req, res) {
+    try {
+      // middleware уже проверил токен и положил данные в req.user
+      const user = await User.findByPk(req.user.id);
+      return res.json({
+        user: {
+          id: user.id,
+          email: user.email,
+          role: user.role,
+          username: user.username,
+        },
+      });
+    } catch (e) {
+      return res.status(401).json({ message: "Не залогинен" });
+    }
+  }
+
+  async deleteUser(req, res) {
+    try {
+      const { userId } = req.body;
+
+      console.log("USERID DELETE ", userId);
+
+      const user = await User.destroy({ where: { id: userId } });
+
+      if (user === 0) {
+        return res.status(404).json({ message: "Пользователь не найден" });
+      }
+
+      await Session.destroy({ where: { userId: userId } });
+
+      return res.json({ message: "Пользователь успешно удален", id: userId });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({ message: "Ошибка удаления!" });
+    }
+  }
+
+  async reliveUser(req, res) {
+    try {
+      const { userId } = req.body;
+      console.log("USER ID RELIVE ", userId);
+      const user = await User.findByPk(userId, { paranoid: false });
+
+      if (!user) {
+        return res.status(404).json({ message: "Пользователь не найден" });
+      }
+
+      await user.restore();
+
+      return res.json({ message: "Пользователь успешно восстановлен", user });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({ message: "Ошибка при восстановлении" });
     }
   }
 }

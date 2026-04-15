@@ -5,11 +5,11 @@ import { useSocket } from "@/shared/api";
 import { useEffect } from "react";
 
 export const useOnlineListener = (userId: number | undefined) => {
-  if (!userId) return;
   const { socket, subscribe } = useSocket(userId);
   const { setOnline, setOffline, setAllOnline } = useOnlineStore();
 
   useEffect(() => {
+    if (!userId) return;
     console.log("USE ONLINE LISTENER");
     const unsubscribe = subscribe((event) => {
       try {

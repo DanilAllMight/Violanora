@@ -5,10 +5,10 @@ class TokenService {
   // Генерируем пару токенов
   generateTokens(payload) {
     const accessToken = jwt.sign(payload, process.env.JWT_ACCESS_SECRET, {
-      expiresIn: "30m",
+      expiresIn: "15m",
     });
     const refreshToken = jwt.sign(payload, process.env.JWT_REFRESH_SECRET, {
-      expiresIn: "30d",
+      expiresIn: "1h",
     });
     return { accessToken, refreshToken };
   }
@@ -28,6 +28,15 @@ class TokenService {
     });
   }
 
+  async deleteSession(userId, deviceInfo, ipAddress) {
+    return await Session.destroy({
+      where: {
+        userId: userId,
+        deviceInfo: deviceInfo,
+        ipAddress: ipAddress,
+      },
+    });
+  }
   // Удаление сессии (для логаута)
   async removeSession(refreshToken) {
     return await Session.destroy({ where: { refreshToken } });

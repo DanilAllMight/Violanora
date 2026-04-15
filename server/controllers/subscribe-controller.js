@@ -7,7 +7,7 @@ class SubscribeController {
       const subscription = req.body;
       const userId = req.user.id; // или req.body.userId для теста
 
-      logger.debug("Subscribe, ", userId, subscription);
+      console.log("Subscribe, ", userId, subscription);
 
       // Sequelize метод для "создай или обнови"
       await PushSubscription.upsert({

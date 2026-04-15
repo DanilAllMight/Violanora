@@ -4,6 +4,8 @@ export interface User {
   username: string;
   avatar_url: string | null;
   online_time: string | null;
+  role: string;
+  deletedAt?: string | null;
 }
 
 export interface UserListResponse {

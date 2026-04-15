@@ -48,12 +48,6 @@ function createHandlers(clients, onlineUsers, getSingleConversation) {
         $set: { "lastMessage.status": "read" },
       });
 
-      /*send(partner, {
-        type: "PARTNER_READ_MESSAGES",
-        senderId: senderId, // Кто прочитал
-        dialogId: dialog._id,
-      });*/
-
       logger.info("В том же чате");
       console.log("PARTNER_READ_MESSAGES ", String(partner));
       send(String(partner), {
@@ -104,11 +98,6 @@ function createHandlers(clients, onlineUsers, getSingleConversation) {
           { upsert: true, new: true },
         );
 
-        /*const fullConv = await getSingleConversation(sUserId, sTo);
-        [sUserId, sTo].forEach((id) => {
-          send(id, { type: "NEW_CONVERSATION", conversation: fullConv });
-        });*/
-
         const newMessage = await Message.create({
           dialogId: dialog._id,
           senderId: sUserId,
@@ -131,11 +120,16 @@ function createHandlers(clients, onlineUsers, getSingleConversation) {
           createdAt: newMessage.createdAt,
         });
 
+        console.log("СТАРТ ОТПРАВКИ УВЕДОМЛЕНИЯ");
+
+        const toUsr = await User.findByPk(to);
+        const usr = await User.findByPk(userId);
+
         await sendNotificationToUser(
           sTo,
           "Новое сообщение",
-          `Вам написал ${"Ктото"}: ${text}`,
-          "/chat", // ссылка куда перейдет юзер при клике
+          `${usr.username}: ${text}`,
+          `/chat/${userId}/${usr.username}`, // ссылка куда перейдет юзер при клике
         );
 
         if (ws.readyState === WebSocket.OPEN) {

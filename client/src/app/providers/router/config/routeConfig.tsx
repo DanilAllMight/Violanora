@@ -33,6 +33,12 @@ const MessagePage = lazy(() =>
   ),
 );
 
+const AdminPage = lazy(() =>
+  import("../../../../pages/admin-page/ui/AdminPage").then((module) => ({
+    default: module.AdminPage,
+  })),
+);
+
 export const publicRoutes = [
   { path: "/", element: <MainPage /> },
   { path: "/login", element: <LoginPage /> },
@@ -43,4 +49,5 @@ export const privateRoutes = [
   { path: "/chat/:userId/:username", element: <ChatPage /> },
   { path: "/profile", element: <ProfilePage /> },
   { path: "/message", element: <MessagePage /> },
+  { path: "/admin", element: <AdminPage />, roles: ["ADMIN"] },
 ];

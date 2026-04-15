@@ -5,6 +5,7 @@ export interface UserAuth {
   refresh_token: string;
   username: string;
   avatar_url: string | null;
+  role: string;
 }
 
 export interface UserSchema {
