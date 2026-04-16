@@ -1,2 +1,2 @@
-export { MessageCard } from "./MessageCard/MessageCard";
-export { MessageList } from "./MessageList/MessageList";
+export { MessageCard } from "./MessageCard";
+export { MessageList } from "./MessageList";

@@ -69,9 +69,16 @@ function createHandlers(clients, onlineUsers, getSingleConversation) {
 
     handleMessage: async (ws, userId, data) => {
       try {
-        const { to, text, tempId } = data;
+        const { to, text, tempId, attachments } = data;
         console.log("СООБЩЕНИЕ ПОЛУЧЕНО");
-        if (!to || !text || !tempId) return;
+        if (
+          !to ||
+          !tempId ||
+          (!text && (!attachments || attachments.length === 0))
+        ) {
+          return;
+        }
+
         console.log("ПРОДОЛЖЕНО ", tempId);
 
         const sTo = String(to);
@@ -79,10 +86,13 @@ function createHandlers(clients, onlineUsers, getSingleConversation) {
         const isSelf = sUserId === sTo;
         const matchKey = [sUserId, sTo].sort().join("_");
 
+        const lastMessageText =
+          text || (attachments?.length > 0 ? "📷 Фотография" : "");
+
         const dialogUpdate = {
           $setOnInsert: { participants: [sUserId, sTo] },
           $set: {
-            "lastMessage.text": text,
+            "lastMessage.text": lastMessageText,
             "lastMessage.senderId": sUserId,
             "lastMessage.status": "sent",
           },
@@ -101,7 +111,8 @@ function createHandlers(clients, onlineUsers, getSingleConversation) {
         const newMessage = await Message.create({
           dialogId: dialog._id,
           senderId: sUserId,
-          text: text,
+          text: text || "",
+          attachments: attachments || [],
           receiverId: sTo,
         });
 
@@ -117,6 +128,7 @@ function createHandlers(clients, onlineUsers, getSingleConversation) {
           senderId: sUserId,
           receiverId: sTo,
           text: text,
+          attachments: newMessage.attachments,
           createdAt: newMessage.createdAt,
         });
 

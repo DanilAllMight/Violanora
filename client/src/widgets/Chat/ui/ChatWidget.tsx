@@ -1,11 +1,14 @@
 import { ChatFooter } from "./ChatFooter";
 import { ChatHeader } from "./ChatHeader";
+import { useCallConversationSocket } from "@/entities/Conversation/model/hooks";
 import { useConversationSocket } from "@/entities/Conversation/model/hooks/useConversationSocket";
 import { useConversationStore } from "@/entities/Conversation/model/store/useConversationStore";
 import { MessageList } from "@/entities/Message/ui";
 import { useUserStore } from "@/entities/User/model/store/useUserStore";
+import { uploadChatMedia } from "@/features/attach-media";
 import { CallOverlay } from "@/features/video-call/ui/CallOverlay";
 import { useSocket } from "@/shared/api/socket/useSocket";
+import { Phone } from "lucide-react";
 import { useState, useRef, useLayoutEffect, useEffect } from "react";
 
 interface ChatWidgetProps {
@@ -19,6 +22,8 @@ export const ChatWidget = ({ userId: targetId }: ChatWidgetProps) => {
   const isFirstLoad = useRef(true);
   const prevMsgCount = useRef(0);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
+  const [isSending, setIsSending] = useState(false);
 
   if (!targetId) return <div>Выберите чат</div>;
 
@@ -35,17 +40,19 @@ export const ChatWidget = ({ userId: targetId }: ChatWidgetProps) => {
   const partner_avatar = useConversationStore((state) => state.partner.avatar);
   const username = useConversationStore((state) => state.partner.username);
 
+  const { messages, isLoading, hasMore, fetchMoreMessages, sendMessage } =
+    useConversationSocket(targetId);
+
+  // Хук для звонков
   const {
-    messages,
-    sendMessage,
-    fetchMoreMessages,
-    hasMore,
-    isLoading,
-    //startCall,
     localStream,
     remoteStream,
+    incomingCall,
+    startCall,
+    acceptCall,
+    rejectCall,
     hangUp,
-  } = useConversationSocket(targetId);
+  } = useCallConversationSocket(targetId);
 
   const typingUsers = useConversationStore((state) => state.typingUsers);
   const isTyping = typingUsers.has(String(targetId));
@@ -99,6 +106,15 @@ export const ChatWidget = ({ userId: targetId }: ChatWidgetProps) => {
     }
   };
 
+  const handleFilesSelected = (newFiles: File[]) => {
+    // Добавляем новые файлы к уже выбранным, но не более 10 всего
+    setFiles((prev) => [...prev, ...newFiles].slice(0, 10));
+  };
+
+  const handleRemoveFile = (index: number) => {
+    setFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
   // 3. Логика "Печатает..." (TYPING)
   const handleInputChange = (value: string) => {
     setInputValue(value);
@@ -116,21 +132,44 @@ export const ChatWidget = ({ userId: targetId }: ChatWidgetProps) => {
     }
   };
 
-  const handleSend = () => {
-    if (inputValue.trim()) {
-      sendMessage(inputValue);
-      setInputValue("");
+  const handleSend = async () => {
+    const hasFiles = files.length > 0;
+    const hasText = inputValue.trim().length > 0;
 
-      // Остановка статуса "печатает" при отправке
-      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-      socket?.send(JSON.stringify({ type: "TYPING_STOP", to: targetId }));
+    if ((hasText || hasFiles) && !isSending) {
+      setIsSending(true); // Включаем лоадер
+      try {
+        let attachmentUrls: { url: string; type: string }[] = [];
 
-      setTimeout(() => {
-        scrollRef.current?.scrollTo({
-          top: scrollRef.current.scrollHeight,
-          behavior: "smooth",
-        });
-      }, 100);
+        // 1. Если есть файлы, грузим их в Supabase
+        if (hasFiles) {
+          const urls = await uploadChatMedia(files);
+          attachmentUrls = urls.map((url) => ({ url, type: "image" }));
+        }
+
+        // 2. Вызываем метод отправки
+        sendMessage(inputValue, attachmentUrls);
+
+        // 3. Очистка
+        setInputValue("");
+        setFiles([]);
+
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+        socket?.send(JSON.stringify({ type: "TYPING_STOP", to: targetId }));
+
+        // Скролл
+        setTimeout(() => {
+          scrollRef.current?.scrollTo({
+            top: scrollRef.current.scrollHeight,
+            behavior: "smooth",
+          });
+        }, 100);
+      } catch (error) {
+        console.error("Upload error:", error);
+        alert("Ошибка при загрузке медиа");
+      } finally {
+        setIsSending(false); // Выключаем лоадер в любом случае
+      }
     }
   };
 
@@ -139,6 +178,7 @@ export const ChatWidget = ({ userId: targetId }: ChatWidgetProps) => {
       <ChatHeader
         username={username}
         partner_avatar={partner_avatar}
+        startCall={startCall}
       ></ChatHeader>
 
       {(localStream || remoteStream) && (
@@ -147,6 +187,42 @@ export const ChatWidget = ({ userId: targetId }: ChatWidgetProps) => {
           remoteStream={remoteStream}
           onHangUp={hangUp}
         />
+      )}
+
+      {/* Всплывающее окно входящего звонка */}
+      {incomingCall && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="animate-in fade-in zoom-in w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl duration-300">
+            <div className="flex flex-col items-center">
+              {/* Аватарка или иконка */}
+              <div className="mb-4 flex h-20 w-20 animate-bounce items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                <Phone size={40} />
+              </div>
+
+              <h3 className="mb-1 text-xl font-bold text-gray-900">
+                Входящий звонок
+              </h3>
+              <p className="mb-6 text-gray-500">
+                Собеседник хочет начать видеочат
+              </p>
+
+              <div className="flex w-full gap-3">
+                <button
+                  onClick={acceptCall}
+                  className="flex-1 rounded-xl bg-green-500 py-3 font-semibold text-white transition-colors hover:bg-green-600 active:scale-95"
+                >
+                  Принять
+                </button>
+                <button
+                  onClick={rejectCall}
+                  className="flex-1 rounded-xl bg-red-500 py-3 font-semibold text-white transition-colors hover:bg-red-600 active:scale-95"
+                >
+                  Отклонить
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       <div
@@ -173,6 +249,10 @@ export const ChatWidget = ({ userId: targetId }: ChatWidgetProps) => {
         handleInputChange={handleInputChange}
         handleSend={handleSend}
         inputValue={inputValue}
+        files={files}
+        onFilesSelected={handleFilesSelected}
+        onRemoveFile={handleRemoveFile}
+        isSending={isSending}
       ></ChatFooter>
     </div>
   );

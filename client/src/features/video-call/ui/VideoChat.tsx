@@ -1,7 +1,6 @@
 import { useVideoCall } from "../lib/useVideoCall";
 import { useEffect } from "react";
 
-// features/video-call/ui/VideoChat.tsx
 export const VideoChat = ({
   socket,
   targetUserId,

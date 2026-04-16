@@ -5,9 +5,14 @@ import { NavLink } from "react-router-dom";
 interface ChatHeaderProps {
   username: string | null;
   partner_avatar: string | null;
+  startCall: () => void;
 }
 
-export const ChatHeader = ({ username, partner_avatar }: ChatHeaderProps) => {
+export const ChatHeader = ({
+  username,
+  partner_avatar,
+  startCall,
+}: ChatHeaderProps) => {
   return (
     <div className="flex w-full items-center justify-center border-b border-gray-50">
       <div className="grid w-full max-w-[700px] grid-cols-[auto_1fr_auto] items-center justify-center px-4">
@@ -28,6 +33,7 @@ export const ChatHeader = ({ username, partner_avatar }: ChatHeaderProps) => {
         <button
           className="rounded-full p-3 transition-colors hover:bg-gray-100"
           aria-label="позвонить"
+          onClick={startCall}
         >
           <PhoneCall size={20} className="text-blue-500" />
         </button>

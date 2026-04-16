@@ -18,8 +18,9 @@ const messageSchema = new mongoose.Schema(
     },
     text: {
       type: String,
-      required: true,
+      required: false,
       trim: true,
+      default: "",
     },
     isRead: {
       type: Boolean,
@@ -30,6 +31,12 @@ const messageSchema = new mongoose.Schema(
       enum: ["sending", "sent", "read"],
       default: "sent",
     },
+    attachments: [
+      {
+        url: { type: String, required: true },
+        type: { type: String, default: "image" },
+      },
+    ],
   },
   { timestamps: true },
 );

@@ -111,6 +111,7 @@ function setupWebSocket(server) {
 
           case "offer":
           case "answer":
+          case "hangup":
           case "ice-candidate":
             // Используем data вместо message, так как у тебя выше const data = JSON.parse(rawData);
             const targetClient = clients.get(String(data.to));

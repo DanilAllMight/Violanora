@@ -1,6 +1,6 @@
-import { useUserStore } from "../../../User/model/store/useUserStore";
-import { type Message, type MessagesList } from "../../model/types/Message";
-import { MessageCard } from "../MessageCard/MessageCard";
+import { useUserStore } from "../../User/model/store/useUserStore";
+import { type Message, type MessagesList } from "../model/types/Message";
+import { MessageCard } from "./MessageCard";
 import { useConversationStore } from "@/entities/Conversation/model/store/useConversationStore";
 
 const groupMessagesByDate = (messages: Message[]) => {

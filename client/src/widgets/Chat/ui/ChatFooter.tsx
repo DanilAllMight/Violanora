@@ -1,3 +1,5 @@
+import { AttachMediaButton } from "@/features/attach-media";
+import { SelectedFilesPreview } from "@/features/attach-media";
 import { Send } from "lucide-react";
 
 interface ChatFooterProps {
@@ -6,6 +8,12 @@ interface ChatFooterProps {
   inputValue: string;
   handleInputChange: (value: string) => void;
   handleSend: () => void;
+
+  files: File[];
+  onFilesSelected: (files: File[]) => void;
+  onRemoveFile: (index: number) => void;
+
+  isSending: boolean;
 }
 
 export const ChatFooter = ({
@@ -14,33 +22,58 @@ export const ChatFooter = ({
   inputValue,
   handleInputChange,
   handleSend,
+  files,
+  onFilesSelected,
+  onRemoveFile,
+  isSending, // Используем его здесь
 }: ChatFooterProps) => {
   return (
     <div className="flex w-full flex-col items-center px-4 pb-4 md:px-0">
-      <div className="h-5 w-full max-w-[400px] text-left px-2">
+      <div className="h-5 w-full max-w-[400px] px-2 text-left">
         {isTyping && (
-          <span className="text-xs text-gray-500 animate-pulse italic">
+          <span className="animate-pulse text-xs text-gray-500 italic">
             {username} печатает...
           </span>
         )}
       </div>
 
-      <div className="mt-2 flex w-full max-w-[400px] items-center gap-3 rounded-xl border border-gray-100 bg-white p-2 shadow-sm">
-        <input
-          value={inputValue}
-          onChange={(e) => handleInputChange(e.target.value)}
-          placeholder="Введите сообщение..."
-          onKeyDown={(e) => e.key === "Enter" && handleSend()}
-          className="w-full rounded-xl p-1.5 outline-none text-sm"
-        />
-        <button
-          aria-label="1"
-          type="button"
-          className="rounded-xl bg-gray-50 p-2 hover:bg-gray-100 transition-colors"
-          onClick={handleSend}
-        >
-          <Send size={20} className="text-blue-500" />
-        </button>
+      <div className="mt-2 flex w-full max-w-[400px] flex-col overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+        <SelectedFilesPreview files={files} onRemove={onRemoveFile} />
+
+        <div className="flex items-center gap-2 p-2">
+          {/* Блокируем кнопку выбора файлов во время отправки */}
+          <AttachMediaButton
+            onFilesSelected={onFilesSelected}
+            disabled={isSending}
+          />
+
+          <input
+            value={inputValue}
+            onChange={(e) => handleInputChange(e.target.value)}
+            disabled={isSending} // Блокируем ввод при отправке
+            placeholder={
+              isSending ? "Загрузка медиа..." : "Введите сообщение..."
+            }
+            onKeyDown={(e) => e.key === "Enter" && !isSending && handleSend()}
+            className="w-full bg-transparent p-1.5 text-sm outline-none disabled:placeholder-gray-400"
+          />
+
+          <button
+            aria-label="Send message"
+            type="button"
+            className="flex items-center justify-center rounded-xl bg-gray-50 p-2 transition-colors hover:bg-gray-100 disabled:opacity-50"
+            onClick={handleSend}
+            // Кнопка неактивна, если пусто ИЛИ если уже идет отправка
+            disabled={isSending || (!inputValue.trim() && files.length === 0)}
+          >
+            {isSending ? (
+              // Простенький спиннер Tailwind
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
+            ) : (
+              <Send size={20} className="text-blue-500" />
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );

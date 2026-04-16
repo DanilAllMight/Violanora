@@ -1,15 +1,9 @@
-import { fetchMessages } from "../../api/fetchMessages";
-import { useConversationListStore } from "../store";
 import { useUserStore } from "@/entities/User/model/store";
 import { useSocket } from "@/shared/api";
 import logger from "@/utils/logger";
 import { useEffect, useState, useCallback, useRef } from "react";
 
-export const useConversationSocket = (targetId: string | undefined) => {
-  const [messages, setMessages] = useState<any[]>([]);
-  const [hasMore, setHasMore] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
-
+export const useCallConversationSocket = (targetId: string | undefined) => {
   const user = useUserStore((state) => state.authData);
   const { socket, subscribe } = useSocket(user?.id);
 
@@ -19,7 +13,6 @@ export const useConversationSocket = (targetId: string | undefined) => {
 
   const iceCandidatesQueue = useRef<RTCIceCandidateInit[]>([]);
 
-  // В начало хука useConversationSocket
   const [incomingCall, setIncomingCall] = useState<{
     from: string;
     offer: any;
@@ -82,56 +75,7 @@ export const useConversationSocket = (targetId: string | undefined) => {
     [socket],
   );
 
-  const getMsgs = useCallback(async () => {
-    if (!targetId || !user?.id) return;
-    try {
-      setIsLoading(true);
-      const msgs = await fetchMessages({
-        senderId: user.id,
-        receiverId: targetId,
-        limit: 20, // Ограничиваем первую порцию
-      });
-      setMessages(msgs);
-      setHasMore(msgs.length === 20);
-    } catch (e) {
-      logger.error(e, "Failed to fetch messages");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [targetId, user?.id]);
-
-  const fetchMoreMessages = useCallback(async () => {
-    if (!targetId || !user?.id || !hasMore || isLoading) return;
-
-    try {
-      setIsLoading(true);
-      const oldestMessage = messages[0];
-      if (!oldestMessage) return;
-
-      const olderMsgs = await fetchMessages({
-        senderId: user.id,
-        receiverId: targetId,
-        before: oldestMessage.createdAt,
-        limit: 20,
-      });
-
-      if (olderMsgs.length < 20) {
-        setHasMore(false);
-      }
-
-      setMessages((prev) => [...olderMsgs, ...prev]);
-    } catch (e) {
-      logger.error(e, "Failed to fetch more messages");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [targetId, user?.id, messages, hasMore, isLoading]);
-
   useEffect(() => {
-    setMessages([]);
-    setHasMore(true);
-    getMsgs();
-
     const unsubscribe = subscribe(async (event) => {
       try {
         const data = JSON.parse(event.data);
@@ -177,49 +121,6 @@ export const useConversationSocket = (targetId: string | undefined) => {
             iceCandidatesQueue.current.push(data.payload);
           }
         }
-
-        if (data.type === "NEW_MESSAGE") {
-          if (
-            String(data.senderId) === String(targetId) &&
-            String(data.senderId) !== String(user?.id)
-          ) {
-            console.log("НОВОЕ СМС", data);
-            setMessages((prev) => [...prev, data]);
-          }
-        }
-
-        if (data.type === "SENT_CONFIRMED") {
-          console.log("SENT_CONFIRMED ", data.tempId, data);
-          setMessages((prev) =>
-            prev.map((msg) =>
-              msg.tempId === data.tempId
-                ? { ...msg, _id: data.realId, status: "sent" }
-                : msg,
-            ),
-          );
-          console.log("ОБНОВИЛИ");
-        }
-
-        if (data.type === "PARTNER_READ_MESSAGES") {
-          console.log("Партнёр прочитал");
-          const listStore = useConversationListStore.getState();
-          const msgDialogId = String(data.dialogId);
-
-          if (msgDialogId) {
-            console.log("ОБНОВЛЯЕМ СТАТУС 2");
-            listStore.updateConversation(msgDialogId, {
-              lastMessage: { status: "read" },
-            });
-          }
-
-          if (String(data.senderId) === String(targetId)) {
-            setMessages((prev) =>
-              prev.map((msg) =>
-                msg.senderId === user?.id ? { ...msg, status: "read" } : msg,
-              ),
-            );
-          }
-        }
       } catch (e) {
         console.error("ПОЛНАЯ ОШИБКА", e);
         logger.error(e, "Error parsing socket message");
@@ -231,7 +132,7 @@ export const useConversationSocket = (targetId: string | undefined) => {
       localStream?.getTracks().forEach((t) => t.stop());
       pc.current?.close();
     };
-  }, [targetId, user?.id, subscribe, getMsgs]);
+  }, [targetId, user?.id, subscribe]);
 
   const acceptCall = async () => {
     if (!incomingCall) return;
@@ -286,13 +187,13 @@ export const useConversationSocket = (targetId: string | undefined) => {
     if (incomingCall && socket?.readyState === WebSocket.OPEN) {
       socket.send(
         JSON.stringify({
-          type: "hangup", // или "reject"
+          type: "hangup",
           to: incomingCall.from,
         }),
       );
     }
     setIncomingCall(null);
-    iceCandidatesQueue.current = []; // чистим очередь
+    iceCandidatesQueue.current = [];
   };
 
   const startCall = async () => {
@@ -315,7 +216,6 @@ export const useConversationSocket = (targetId: string | undefined) => {
   };
 
   const stopAllTracks = useCallback(() => {
-    // 1. Останавливаем все треки локального стрима (камера и микрофон)
     if (localStream) {
       localStream.getTracks().forEach((track) => {
         track.stop();
@@ -323,65 +223,21 @@ export const useConversationSocket = (targetId: string | undefined) => {
       });
     }
 
-    // 2. Закрываем PeerConnection
     if (pc.current) {
-      // Убираем обработчики, чтобы они не стреляли после закрытия
       pc.current.onicecandidate = null;
       pc.current.ontrack = null;
       pc.current.close();
       pc.current = null;
     }
 
-    // 3. Очищаем очередь кандидатов
     iceCandidatesQueue.current = [];
 
-    // 4. Сбрасываем стейты стримов для UI
     setLocalStream(null);
     setRemoteStream(null);
     setIncomingCall(null);
-    // Если у тебя был стейт callAccepted или isCalling, сбрось и их
-    // setCallAccepted(false);
   }, [localStream]);
 
-  const sendMessage = (
-    text: string,
-    attachments: { url: string; type: string }[] = [],
-  ) => {
-    const tempId = Date.now().toString();
-
-    if (socket?.readyState === WebSocket.OPEN) {
-      // Отправляем на сервер (тип "MESSAGE" как у тебя в коде)
-      socket.send(
-        JSON.stringify({
-          to: targetId,
-          text,
-          type: "MESSAGE",
-          tempId: tempId,
-          attachments,
-        }),
-      );
-
-      setMessages((prev) => [
-        ...prev,
-        {
-          _id: Date.now(),
-          senderId: user?.id,
-          text,
-          attachments,
-          createdAt: new Date().toISOString(),
-          status: "sending",
-          tempId: tempId,
-        },
-      ]);
-    }
-  };
-
   return {
-    messages,
-    sendMessage,
-    fetchMoreMessages,
-    hasMore,
-    isLoading,
     startCall,
     localStream,
     remoteStream,
