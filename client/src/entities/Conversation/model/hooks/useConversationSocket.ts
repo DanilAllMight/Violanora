@@ -1,5 +1,5 @@
 import { fetchMessages } from "../../api/fetchMessages";
-import { useConversationListStore, useConversationStore } from "../store";
+import { useConversationListStore } from "../store";
 import { useUserStore } from "@/entities/User/model/store";
 import { useSocket } from "@/shared/api";
 import { useEffect, useState, useCallback } from "react";

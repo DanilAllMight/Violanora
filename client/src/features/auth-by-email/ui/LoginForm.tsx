@@ -22,7 +22,7 @@ export const LoginForm = () => {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      const result = await loginByEmail(data);
+      await loginByEmail(data);
       navigate("/");
     } catch (error) {}
   };

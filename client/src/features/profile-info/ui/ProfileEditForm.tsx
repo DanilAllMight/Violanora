@@ -31,7 +31,7 @@ export const ProfileEditForm = ({ setIsEdit }: ProfileEditFormProps) => {
         userId: myId,
         data: data,
       };
-      const result = await updateProfileData(_data);
+      await updateProfileData(_data);
       setIsEdit(false);
     } catch (error) {}
   };

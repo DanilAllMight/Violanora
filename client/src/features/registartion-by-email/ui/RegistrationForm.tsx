@@ -21,7 +21,7 @@ export const RegistrationForm = () => {
   const navigate = useNavigate();
 
   const onSubmit = async (data: RegistrationFormData) => {
-    const result = await registrationByEmail(data);
+    registrationByEmail(data);
     navigate("/");
   };
 

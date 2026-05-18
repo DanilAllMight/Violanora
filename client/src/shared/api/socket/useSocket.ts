@@ -50,7 +50,7 @@ export const useSocket = (userId: number | undefined) => {
         }
       };
 
-      ws.onerror = (error) => {
+      ws.onerror = () => {
         ws.close();
       };
     };
