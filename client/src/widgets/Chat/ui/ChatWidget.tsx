@@ -30,10 +30,6 @@ export const ChatWidget = ({ userId: targetId }: ChatWidgetProps) => {
   const myId = useUserStore.getState().authData?.id;
   const { socket } = useSocket(myId);
 
-  const setActiveDialog = useConversationStore(
-    (state) => state.setActiveDialog,
-  );
-
   const resetActiveDialog = useConversationStore(
     (state) => state.resetActiveDialog,
   );
@@ -43,7 +39,6 @@ export const ChatWidget = ({ userId: targetId }: ChatWidgetProps) => {
   const { messages, isLoading, hasMore, fetchMoreMessages, sendMessage } =
     useConversationSocket(targetId);
 
-  // Хук для звонков
   const {
     localStream,
     remoteStream,
@@ -57,18 +52,16 @@ export const ChatWidget = ({ userId: targetId }: ChatWidgetProps) => {
   const typingUsers = useConversationStore((state) => state.typingUsers);
   const isTyping = typingUsers.has(String(targetId));
 
-  // 1. Инициализация диалога
   useEffect(() => {
     if (myId && targetId) {
       useConversationStore.getState().getConversation(myId, Number(targetId));
     }
     return () => {
       resetActiveDialog();
-      isFirstLoad.current = true; // Сброс при выходе
+      isFirstLoad.current = true;
     };
-  }, [targetId, setActiveDialog, resetActiveDialog, username, myId]);
+  }, [targetId, myId]);
 
-  // 2. Логика скролла (Замораживание при подгрузке истории)
   useLayoutEffect(() => {
     const container = scrollRef.current;
     if (!container || messages.length === 0) return;
@@ -107,7 +100,6 @@ export const ChatWidget = ({ userId: targetId }: ChatWidgetProps) => {
   };
 
   const handleFilesSelected = (newFiles: File[]) => {
-    // Добавляем новые файлы к уже выбранным, но не более 10 всего
     setFiles((prev) => [...prev, ...newFiles].slice(0, 10));
   };
 
@@ -115,7 +107,6 @@ export const ChatWidget = ({ userId: targetId }: ChatWidgetProps) => {
     setFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // 3. Логика "Печатает..." (TYPING)
   const handleInputChange = (value: string) => {
     setInputValue(value);
 
@@ -137,27 +128,23 @@ export const ChatWidget = ({ userId: targetId }: ChatWidgetProps) => {
     const hasText = inputValue.trim().length > 0;
 
     if ((hasText || hasFiles) && !isSending) {
-      setIsSending(true); // Включаем лоадер
+      setIsSending(true);
       try {
         let attachmentUrls: { url: string; type: string }[] = [];
 
-        // 1. Если есть файлы, грузим их в Supabase
         if (hasFiles) {
           const urls = await uploadChatMedia(files);
           attachmentUrls = urls.map((url) => ({ url, type: "image" }));
         }
 
-        // 2. Вызываем метод отправки
         sendMessage(inputValue, attachmentUrls);
 
-        // 3. Очистка
         setInputValue("");
         setFiles([]);
 
         if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
         socket?.send(JSON.stringify({ type: "TYPING_STOP", to: targetId }));
 
-        // Скролл
         setTimeout(() => {
           scrollRef.current?.scrollTo({
             top: scrollRef.current.scrollHeight,
@@ -165,10 +152,9 @@ export const ChatWidget = ({ userId: targetId }: ChatWidgetProps) => {
           });
         }, 100);
       } catch (error) {
-        console.error("Upload error:", error);
         alert("Ошибка при загрузке медиа");
       } finally {
-        setIsSending(false); // Выключаем лоадер в любом случае
+        setIsSending(false);
       }
     }
   };
@@ -189,12 +175,10 @@ export const ChatWidget = ({ userId: targetId }: ChatWidgetProps) => {
         />
       )}
 
-      {/* Всплывающее окно входящего звонка */}
       {incomingCall && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
           <div className="animate-in fade-in zoom-in w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl duration-300">
             <div className="flex flex-col items-center">
-              {/* Аватарка или иконка */}
               <div className="mb-4 flex h-20 w-20 animate-bounce items-center justify-center rounded-full bg-blue-100 text-blue-600">
                 <Phone size={40} />
               </div>

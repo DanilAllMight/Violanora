@@ -1,24 +1,27 @@
 const WebSocket = require("ws");
 const {
   getSingleConversation,
-} = require("./controllers/conversation-controller");
-const createHandlers = require("./utils/socketHandlers.js");
-const logger = require("./utils/logger.js");
-const { User } = require("./models/models.js");
+} = require("../controllers/conversation-controller.js");
+const createHandlers = require("../utils/socketHandlers.js");
+const logger = require("../utils/logger.js");
+const { User } = require("../models/models.js");
 let clientsMap = new Map();
+const socketMsg = require("../constants/socketMessages.js");
+const userRepository = require("../repositories/user-repository.js");
 
 const updateOnlineTime = async (userId) => {
-  console.log("userId", userId);
-  const fnd = await User.findOne({ where: { id: userId } });
-  console.log("USER ", fnd);
-  const user = await User.update(
-    { online_time: new Date() },
-    { where: { id: Number(userId) } },
-  );
-  console.log("TIME ", user);
+  logger.debug(userId, "Идентификатор пользователя");
+  const fnd = await userRepository.findById(userId);
+  const data_updated = { online_time: new Date() };
+  const user = await userRepository.update(userId, data_updated);
+};
+
+const findSocketByUserId = (userId) => {
+  return clientsMap.get(String(userId));
 };
 
 function setupWebSocket(server) {
+  logger.debug("WebSocketServer запущен");
   const wss = new WebSocket.Server({ server });
 
   const clients = new Map(); // Это карта (модель данных) описывающая пользователей подключённых к сессии в форме userId:id
@@ -31,9 +34,11 @@ function setupWebSocket(server) {
 
   // Метод для рассылания сообщения (события) всем пользователям, находящимся в сессии
   function broadcast(data) {
+    logger.debug(data, "Начало рассылки сообщений всем пользователям");
     const message = JSON.stringify(data);
     wss.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
+        logger.debug("Отправляем сообщение");
         client.send(message);
       }
     });
@@ -46,7 +51,7 @@ function setupWebSocket(server) {
     const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
     const userId = url.searchParams.get("userId");
 
-    console.log("CONNECTED ", userId);
+    logger.info(userId, "Пользователь подсоединился к WebSocket");
 
     if (userId) {
       const sUserId = String(userId);
@@ -61,22 +66,23 @@ function setupWebSocket(server) {
       if (offlineTimers.has(sUserId)) {
         clearTimeout(offlineTimers.get(sUserId));
         offlineTimers.delete(sUserId);
-        console.log(
-          `♻️ Юзер ${sUserId} обновил страницу. Статус не прерывался.`,
-        );
+        logger.debug("Пользователь обновил страницу");
       }
 
       // Если пользователя нет в словаре тех, кто в сети, это его нужно туда добавить и оповестить об этом всех
       if (!onlineUsers.has(sUserId)) {
         onlineUsers.add(sUserId);
-        broadcast({ type: "USER_ONLINE", userId: Number(sUserId) });
-        console.log(`✅ Пользователь ${sUserId} вошел в сеть`);
+        broadcast({
+          type: socketMsg.SERVER_USER_ONLINE,
+          userId: Number(sUserId),
+        });
+        logger.debug("Пользователь вошёл в сеть");
       }
 
       // Отправляем клиенту ответ в виде списка всех пользователей в сети
       ws.send(
         JSON.stringify({
-          type: "INITIAL_ONLINE_LIST",
+          type: socketMsg.SERVER_ONLINE_LIST,
           userIds: Array.from(onlineUsers).map(Number),
         }),
       );
@@ -84,56 +90,36 @@ function setupWebSocket(server) {
 
     ws.on("message", async function incoming(rawData) {
       try {
+        logger.debug("Начало обработки сообщения webSocket");
         const data = JSON.parse(rawData);
         const { type } = data;
 
-        if (data.type == "ping") {
-          ws.send(
-            JSON.stringify({
-              type: "pong",
-            }),
-          );
-        }
-
-        logger.info("TYPE=", type);
+        logger.info(type, "Пользователь отправил сообщение");
 
         switch (type) {
-          case "TYPING_START":
-          case "TYPING_STOP":
+          case socketMsg.CLIENT_PING_PONG:
+            handlers.handlePingPong(ws);
+            break;
+          case socketMsg.CLIENT_TYPING_START:
+          case socketMsg.CLIENT_TYPING_STOP:
             handlers.handleTyping(userId, data);
             break;
-          case "MARK_AS_READ":
+          case socketMsg.CLIENT_MARK_AS_READ:
             await handlers.handleMarkAsRead(userId, data, ws);
             break;
-          case "MESSAGE":
+          case socketMsg.CLIENT_MESSAGE:
             await handlers.handleMessage(ws, userId, data);
             break;
 
-          case "offer":
-          case "answer":
-          case "hangup":
-          case "ice-candidate":
-            // Используем data вместо message, так как у тебя выше const data = JSON.parse(rawData);
-            const targetClient = clients.get(String(data.to));
-
-            if (targetClient && targetClient.readyState === WebSocket.OPEN) {
-              targetClient.send(
-                JSON.stringify({
-                  type: data.type, // offer, answer или ice-candidate
-                  payload: data.payload,
-                  from: userId, // userId мы получили выше из URL при коннекте
-                }),
-              );
-              console.log(
-                `📡 Сигнал ${data.type} переслан от ${userId} к ${data.to}`,
-              );
-            } else {
-              console.log(` reference: Пользователь ${data.to} не в сети`);
-            }
+          case socketMsg.CLIENT_OFFER:
+          case socketMsg.CLIENT_ANSWER:
+          case socketMsg.CLIENT_HANGUP:
+          case socketMsg.CLIENT_ICE_CANDIDATE:
+            handlers.handleVideoCall(clients, data, userId);
             break;
         }
       } catch (e) {
-        console.error("❌ Ошибка WS:", e);
+        logger.error(e, "Ошибка обработки сообщения");
       }
     });
 
@@ -156,8 +142,11 @@ function setupWebSocket(server) {
               userSocketsCount.delete(sUserId);
               clients.delete(sUserId);
               updateOnlineTime(userId);
-              broadcast({ type: "USER_OFFLINE", userId: Number(sUserId) });
-              console.log(`❌ Юзер ${sUserId} покинул сеть (таймер истек)`);
+              broadcast({
+                type: socketMsg.SERVER_USER_OFFLINE,
+                userId: Number(sUserId),
+              });
+              logger.debug(sUserId, "Пользователь покинул сеть");
             }
             // Если вернулся
             offlineTimers.delete(sUserId);
@@ -165,8 +154,9 @@ function setupWebSocket(server) {
 
           offlineTimers.set(sUserId, timerId);
         } else {
-          console.log(
-            `ℹ️ У юзера ${sUserId} закрыта вкладка (осталось: ${count})`,
+          logger.debug(
+            { sUserId, count },
+            "Пользователь закрыл вкладку и у него осталось",
           );
         }
       }
@@ -175,9 +165,5 @@ function setupWebSocket(server) {
 
   return wss;
 }
-
-const findSocketByUserId = (userId) => {
-  return clientsMap.get(String(userId));
-};
 
 module.exports = { setupWebSocket, findSocketByUserId };

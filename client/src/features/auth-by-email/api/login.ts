@@ -1,15 +1,14 @@
-import { type LoginFormData, type LoginResponse } from "../model/types";
+import { type LoginFormData } from "../model/types";
 import { useUserStore } from "@/entities/User/model/store/useUserStore";
+import type { UserAuth } from "@/entities/User/model/types";
 import { $api } from "@/shared/api/api";
 import { toast } from "sonner";
 
 export const loginByEmail = async (data: LoginFormData) => {
   try {
-    const response = await $api.post<LoginResponse>("/api/user/login", data);
+    const response = await $api.post<UserAuth>("/api/auth/login", data);
 
-    //logger.info({ count: response.data }, "Авторизация прошла успешно!!");
-
-    const { user } = response.data;
+    const user = response.data;
 
     useUserStore.getState().setAuthData(user);
 

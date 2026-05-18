@@ -33,17 +33,10 @@ export const useConversationStore = create<ConversationStoreState>(
         activeDialogId: id,
         partner: { username, avatar },
       });
-
-      // ВАЖНО: Обнуляем счетчик в списке чатов (в другом сторе)
-      // Предположим, у тебя в AuthStore лежит текущий userId
-      // useConversationListStore.getState().updateConversation(id, { unreadCount: { [myId]: 0 } });
     },
 
     setTyping: (userId, isTyping) => {
-      //console.log(`TYPING ${isTyping}`);
-
       set((state) => {
-        // В Zustand нельзя мутировать стейт напрямую, поэтому создаем новый Set
         const newSet = new Set(state.typingUsers);
         if (isTyping) {
           newSet.add(String(userId));
@@ -55,7 +48,6 @@ export const useConversationStore = create<ConversationStoreState>(
     },
 
     resetActiveDialog: () => {
-      //console.log(`[ChatStore] Resetting active dialog`);
       set({ activeDialogId: null });
     },
 
@@ -67,18 +59,13 @@ export const useConversationStore = create<ConversationStoreState>(
             (p: any) => p.id === partnerId,
           );
 
-          // Используем метод этого же стора для консистентности
           get().setActiveDialog(
-            response.data._id,
+            response.data.id,
             partnerData?.username || "",
             partnerData?.avatar_url || null,
           );
         }
-      } catch (e) {
-        console.error("Ошибка загрузки диалога", e);
-      }
+      } catch (e) {}
     },
-
-    // Обновляем текст сообщения в сторе
   }),
 );

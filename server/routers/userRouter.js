@@ -4,40 +4,44 @@ const router = express.Router();
 const multer = require("multer");
 const authMiddleware = require("../middlewares/authMiddleware");
 const roleMiddleware = require("../middlewares/roleMiddleware");
+const catchAsync = require("../utils/catchAsync");
 
 const upload = multer({ storage: multer.memoryStorage() });
 
-router.post("/login", userController.login);
-router.post("/registration", userController.registration);
-router.post("/refresh", userController.refresh);
-router.post("/logout", authMiddleware, userController.logout);
-router.get("/users", userController.getUsers);
+router.get(
+  "/users",
+  catchAsync((req, res, next) => userController.getUsers(req, res, next)),
+);
 router.get(
   "/users/admin",
   authMiddleware,
   roleMiddleware(["ADMIN"]),
-  userController.getUsersForAdmin,
+  catchAsync((req, res, next) =>
+    userController.getUsersForAdmin(req, res, next),
+  ),
 );
 router.post(
   "/relive",
   authMiddleware,
   roleMiddleware(["ADMIN"]),
-  userController.reliveUser,
+  catchAsync((req, res, next) => userController.reliveUser(req, res, next)),
 );
 router.post(
   "/upload-avatar",
   authMiddleware,
   upload.single("avatar"),
-  userController.uploadAvatar,
+  catchAsync((req, res, next) => userController.uploadAvatar(req, res, next)),
 );
-router.post("/fcm-token", userController.updateFcmToken);
-router.post("/update", authMiddleware, userController.updateUserData);
-router.post("/check", authMiddleware, userController.check);
+router.post(
+  "/update",
+  authMiddleware,
+  catchAsync((req, res, next) => userController.updateUserData(req, res, next)),
+);
 router.post(
   "/delete",
   authMiddleware,
   roleMiddleware(["ADMIN"]),
-  userController.deleteUser,
+  catchAsync((req, res, next) => userController.deleteUser(req, res, next)),
 );
 
 module.exports = router;

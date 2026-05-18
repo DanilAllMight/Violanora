@@ -1,13 +1,14 @@
 const sequelize = require("../config/db");
+const logger = require("./logger");
 
 async function initDB() {
   try {
+    logger.debug("Подклюение к бд postgres");
     await sequelize.authenticate();
     await sequelize.sync({ alter: false, force: false });
-
-    console.log("Success");
+    logger.debug("Подключено к postgres");
   } catch (err) {
-    console.error(err);
+    logger.error(err, "Ошибка подключения");
   }
 }
 

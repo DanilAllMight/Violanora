@@ -6,12 +6,14 @@ const cors = require("cors");
 const express = require("express");
 const http = require("http");
 const helmet = require("helmet");
-const { setupWebSocket } = require("./webSocket");
+const { setupWebSocket } = require("./services/webSocket");
 const {
   generalLimiter,
   chatMessageLimiter,
 } = require("./middlewares/rateLimiterMiddleware");
 const cookieParser = require("cookie-parser");
+const errorMiddleware = require("./middlewares/errorMiddleware");
+const logger = require("./utils/logger");
 
 require("dotenv").config();
 const app = require("express")();
@@ -23,7 +25,7 @@ initDB();
 connectDB();
 
 app.use(cookieParser());
-app.use(helmet()); // Защита 1
+app.use(helmet());
 app.use(
   cors({
     origin: [
@@ -38,11 +40,12 @@ app.use(express.json());
 
 app.use("/api", router);
 app.use(generalLimiter);
+app.use(errorMiddleware);
 
 const server = http.createServer(app);
 
 setupWebSocket(server);
 
 server.listen(port, host, function () {
-  console.log(`Server listens http://${host}:${port}`);
+  logger.debug({ host, port }, "Сервер запущен");
 });

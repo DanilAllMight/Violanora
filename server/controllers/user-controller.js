@@ -1,443 +1,125 @@
 const { User, Session } = require("../models/models");
 const bcrypt = require("bcrypt");
 const sharp = require("sharp");
-const { supabase } = require("../utils/supabase");
+const { supabase } = require("../utils/s3");
 const tokenService = require("../services/token-service");
 const logger = require("../utils/logger");
 const { where } = require("sequelize");
+const UserService = require("../services/user-service");
+const GetUsersResponseDto = require("../dtos/user/getUsers.response.dto");
+const GetUsersForAdminResponseDto = require("../dtos/user/getUsersForAdmin.response.dto");
+const UploadAvatarRequestDto = require("../dtos/user/uploadAvatar.request.dto");
+const UploadAvatarResponseDto = require("../dtos/user/uploadAvatar.response.dto");
+const UpdateUserDataRequest = require("../dtos/user/updateUserData.request.dto");
+const DeleteUserRequest = require("../dtos/user/deleteUser.request.dto");
+const ReliveUserRequest = require("../dtos/user/reliveUser.request.dto");
+const UpdateUserDataResponse = require("../dtos/user/updateUserData.response.dto");
+const DeleteUserResponse = require("../dtos/user/deleteUser.response.dto");
+const ReliveUserResponse = require("../dtos/user/reliveUser.response.dto");
+const catchAsync = require("../utils/catchAsync");
 
 class UserController {
-  async registration(req, res) {
-    console.log("UserController :: registration() :: req.body", req.body);
-    const { email, password, username } = req.body;
+  async getUsers(req, res, next) {
+    logger.info("Пользователь запросил список пользователей");
+    const usersData = await UserService.getUsers();
 
-    const hashPassword = await bcrypt.hash(password, 10);
+    const data = new GetUsersResponseDto(usersData);
 
-    const candidate = await User.findOne({ where: { email: email } });
+    logger.debug("Возврат пользователю пользователей");
 
-    if (candidate) {
-      return res.status(400).json({
-        message: "Пользователь с таким email уже существует",
-      });
-    }
-
-    const candidateName = await User.findOne({ where: { username: username } });
-
-    if (candidateName) {
-      return res.status(400).json({
-        message: "Пользователь с таким username уже существует",
-      });
-    }
-
-    try {
-      const user = await User.create({
-        email: email,
-        hashpassword: hashPassword,
-        username: username,
-      });
-      console.log("UserController :: registration :: Пользователь создан!");
-
-      const tokens = tokenService.generateTokens({
-        id: user.id,
-        email: user.email,
-      });
-
-      await tokenService.saveSession(
-        user.id,
-        tokens.refreshToken,
-        req.headers["user-agent"],
-        req.ip,
-      );
-
-      const data = {
-        user: {
-          id: user.id,
-          access_token: tokens.accessToken,
-          refresh_token: tokens.refreshToken,
-          username: username,
-          email: email,
-          role: user.role,
-        },
-      };
-
-      res.cookie("refreshToken", tokens.refreshToken, {
-        maxAge: 30 * 24 * 60 * 60 * 1000,
-        httpOnly: true,
-      });
-      res.json(data);
-    } catch (error) {
-      return res.status(500).json({
-        message: "Пользователь не создан!",
-      });
-    }
+    return res.json(data);
   }
 
-  async login(req, res) {
-    console.log("UserController :: login :: req.body ", req.body);
+  async getUsersForAdmin(req, res, next) {
+    logger.info(
+      "Пользователь запросил список пользователей для администратора",
+    );
+    const isAdmin = req.role === "ADMIN";
 
-    const { email, password } = req.body;
+    const usersData = await UserService.getUsersForAdmin(isAdmin);
 
-    const candidate = await User.findOne({ where: { email: email } });
+    const data = new GetUsersForAdminResponseDto(usersData);
 
-    if (!candidate) {
-      return res.status(404).json({
-        message: "Пользователя с таким Email не существует!",
-      });
-    }
+    logger.debug("Возврат пользователю пользователей для администратора");
 
-    const comp = await bcrypt.compare(password, candidate.hashpassword);
+    return res.json(data);
+  }
 
-    if (!comp) {
-      return res.status(400).json({
-        message: "Неверный пароль!",
-      });
-    }
+  async uploadAvatar(req, res, next) {
+    const requestDto = new UploadAvatarRequestDto(req.body, req.file);
 
-    await tokenService.deleteSession(
-      candidate.id,
-      req.headers["user-agent"],
-      req.ip,
+    logger.info("Пользователь обновляет аватар");
+
+    if (!requestDto.file)
+      return res.status(400).json({ error: "Файл не выбран" });
+
+    const userData = await UserService.uploadAvatar(
+      requestDto.userId,
+      requestDto.file,
     );
 
-    const tokens = tokenService.generateTokens({
-      id: candidate.id,
-      email: candidate.email,
+    const data = new UploadAvatarResponseDto(userData);
+
+    logger.debug("Возращаем пользователю даннеы после обновлвения аватара");
+
+    return res.json(data);
+  }
+
+  async updateUserData(req, res, next) {
+    const requestDto = new UpdateUserDataRequest(req.body);
+
+    logger.info(requestDto, "Пользователь обновляет данные");
+
+    const userData = await UserService.updateUserData(
+      requestDto.userId,
+      requestDto.data,
+    );
+
+    const user = new UpdateUserDataResponse(userData);
+
+    logger.debug(user, "Возвращаем пользователю обновлённые данные");
+
+    return res.json(user);
+  }
+
+  async deleteUser(req, res, next) {
+    const requestDto = DeleteUserRequest(req.body);
+
+    logger.info(requestDto, "Администратор хочет удалить пользователя");
+
+    await UserService.deleteUser(requestDto.userId);
+
+    const responseDto = new DeleteUserResponse(requestDto.userId);
+
+    logger.debug(
+      responseDto,
+      "Возвращаем администратору данные о пользователе",
+    );
+
+    return res.json({
+      message: "Пользователь успешно удален",
+      id: responseDto,
     });
+  }
 
-    await tokenService.saveSession(
-      candidate.id,
-      tokens.refreshToken,
-      req.headers["user-agent"],
-      req.ip,
+  async reliveUser(req, res, next) {
+    const requestDto = ReliveUserRequest(req.body);
+
+    logger.info(requestDto, "Администратор восстанавливает пользователя");
+
+    const userData = await UserService.reliveUser(requestDto.userId);
+
+    const user = new ReliveUserResponse(userData);
+
+    logger.debug(
+      user,
+      "Возвращаем администратору данные о восстановленном пользователе",
     );
 
-    console.log("UserController :: login :: Пользователь вошёл!");
-
-    const data = {
-      user: {
-        id: candidate.id,
-        access_token: tokens.accessToken,
-        refresh_token: tokens.refreshToken,
-        email: email,
-        username: candidate.username,
-        avatar_url: candidate.avatar_url,
-        role: candidate.role,
-      },
-    };
-    res.cookie("refreshToken", tokens.refreshToken, {
-      maxAge: 30 * 24 * 60 * 60 * 1000,
-      httpOnly: true,
+    return res.json({
+      message: "Пользователь успешно восстановлен",
+      user: user,
     });
-    res.json(data);
-  }
-
-  async getUsers(req, res) {
-    try {
-      console.log("UserController :: getUsers");
-      const users = await User.findAndCountAll({
-        attributes: [
-          "id",
-          "email",
-          "username",
-          "avatar_url",
-          "online_time",
-          "role",
-        ],
-      });
-      //console.log("users ", users);
-      const data = { users: users.rows, count: users.count };
-      return res.json(data);
-    } catch (err) {
-      return res.status(500).json({
-        message: "Ошибка получения списка пользователей!",
-      });
-    }
-  }
-
-  async getUsersForAdmin(req, res) {
-    try {
-      console.log("UserController :: getUsers for Admin", req.role);
-      const isAdmin = req.role === "ADMIN";
-      const users = await User.findAndCountAll({
-        attributes: [
-          "id",
-          "email",
-          "username",
-          "avatar_url",
-          "online_time",
-          "role",
-          "deletedAt",
-        ],
-        paranoid: !isAdmin, // Если админ, то paranoid: false (покажет всех)
-      });
-
-      //console.log("users ", users);
-      const data = { users: users.rows, count: users.count };
-      return res.json(data);
-    } catch (err) {
-      console.log(err);
-      return res.status(500).json({
-        message: "Ошибка получения списка пользователей!",
-      });
-    }
-  }
-
-  async uploadAvatar(req, res) {
-    try {
-      const file = req.file;
-      const { userId } = req.body;
-
-      if (!file) return res.status(400).json({ error: "Файл не выбран" });
-
-      // --- 1. НАХОДИМ ТЕКУЩЕГО ПОЛЬЗОВАТЕЛЯ И СТАРЫЙ АВАТАР ---
-      const user = await User.findByPk(userId);
-      if (!user)
-        return res.status(404).json({ error: "Пользователь не найден" });
-
-      const oldAvatarUrl = user.avatar_url;
-
-      // 2. Сжимаем новую картинку
-      const buffer = await sharp(file.buffer)
-        .resize(400, 400, { fit: "cover" })
-        .webp({ quality: 80 })
-        .toBuffer();
-
-      const fileName = `avatars/${userId}-${Date.now()}.webp`;
-
-      // --- 3. УДАЛЯЕМ СТАРЫЙ ФАЙЛ ИЗ STORAGE (если он есть) ---
-      if (oldAvatarUrl) {
-        try {
-          // Извлекаем путь после названия бакета (все, что после /avatar_images/)
-          // Пример URL: .../storage/v1/object/public/avatar_images/avatars/1-123.webp
-          const pathParts = oldAvatarUrl.split("avatar_images/");
-          if (pathParts.length > 1) {
-            const oldFilePath = pathParts[1];
-            await supabase.storage.from("avatar_images").remove([oldFilePath]);
-            console.log("Старый файл удален из хранилища:", oldFilePath);
-          }
-        } catch (removeErr) {
-          // Ошибку удаления не "кидаем" дальше, чтобы не прерывать загрузку новой авы
-          console.error(
-            "Ошибка при удалении старого файла:",
-            removeErr.message,
-          );
-        }
-      }
-
-      // 4. Загружаем новый файл в Supabase
-      const { data, error } = await supabase.storage
-        .from("avatar_images")
-        .upload(fileName, buffer, {
-          contentType: "image/webp",
-          upsert: true,
-        });
-
-      if (error) throw error;
-
-      // 5. Получаем публичную ссылку
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from("avatar_images").getPublicUrl(fileName);
-
-      // 6. Обновляем запись в PostgreSQL
-      await User.update({ avatar_url: publicUrl }, { where: { id: userId } });
-
-      res.json({
-        message: "Аватар успешно обновлен",
-        url: publicUrl,
-      });
-    } catch (err) {
-      console.error("Ошибка загрузки аватара:", err);
-      res.status(500).json({ error: "Ошибка при загрузке аватара" });
-    }
-  }
-
-  // Контроллер пользователя
-  async updateFcmToken(req, res) {
-    try {
-      const { userId, token } = req.body;
-
-      console.log("UPDATE FCM USER ID ", userId);
-
-      if (!userId) {
-        return res.status(400).json({ message: "ID пользователя обязателен" });
-      }
-
-      // Обновляем запись в PostgreSQL через вашу модель User
-      // Убедитесь, что миграция с полем fcmToken уже выполнена
-      await User.update({ fcmToken: token }, { where: { id: userId } });
-
-      console.log(`✅ Токен обновлен для пользователя ${userId}`);
-      return res.status(200).json({ message: "Токен успешно обновлен" });
-    } catch (error) {
-      console.error("Ошибка при обновлении FCM токена:", error);
-      return res
-        .status(500)
-        .json({ error: "Ошибка сервера при сохранении токена" });
-    }
-  }
-
-  async updateUserData(req, res) {
-    const { userId, data } = req.body;
-
-    console.log("data, ", data);
-
-    const user = await User.update(
-      { username: data.username },
-      { where: { id: userId } },
-    );
-
-    if (user) {
-      const usr = { user: { username: data.username } };
-      console.log("username ", usr);
-      res.json(usr);
-    } else {
-      res.status(400).json("Ошибка в данных");
-    }
-  }
-
-  async refresh(req, res) {
-    try {
-      // 1. Достаем refreshToken из кук
-      const { refreshToken } = req.cookies;
-
-      if (!refreshToken) {
-        return res.status(401).json({ message: "Токен отсутствует" });
-      }
-
-      // 2. Валидируем токен через сервис
-      const userData = tokenService.validateRefreshToken(refreshToken);
-      // 3. Проверяем наличие этой сессии в БД
-      const tokenFromDb = await Session.findOne({ where: { refreshToken } });
-
-      if (!userData || !tokenFromDb) {
-        return res
-          .status(401)
-          .json({ message: "Сессия не найдена или просрочена" });
-      }
-
-      // 4. Находим пользователя и создаем новые токены
-      const user = await User.findByPk(userData.id);
-
-      console.log("ПОЛЬЗОВАТЕЛЬ НАЙДЕН? ", user);
-
-      const tokens = tokenService.generateTokens({
-        id: user.id,
-        email: user.email,
-      });
-
-      // 5. Обновляем refreshToken в базе данных (старую сессию заменяем новой)
-      tokenFromDb.refreshToken = tokens.refreshToken;
-      await tokenFromDb.save();
-
-      // 6. Устанавливаем новую куку и отдаем данные
-      res.cookie("refreshToken", tokens.refreshToken, {
-        maxAge: 30 * 24 * 60 * 60 * 1000,
-        httpOnly: true,
-      });
-
-      console.log("ДОШЛИ ДО СЮДА ", tokens);
-
-      // Возвращаем данные в том формате, который ожидает твой клиент
-      return res.json({
-        user: {
-          id: user.id,
-          access_token: tokens.accessToken,
-          refresh_token: tokens.refreshToken,
-          username: user.username,
-          email: user.email,
-          role: user.role,
-          avatar_url: user.avatar_url,
-        },
-      });
-    } catch (error) {
-      console.error(error);
-      return res.status(401).json({ message: "Ошибка авторизации" });
-    }
-  }
-
-  async logout(req, res) {
-    try {
-      // 1. Извлекаем Refresh Token из кук
-      const { refreshToken } = req.cookies;
-
-      console.log("LOGOUT ", refreshToken);
-      logger.debug("LOGOUT");
-
-      if (refreshToken) {
-        // 2. Удаляем сессию из таблицы в БД
-        await Session.destroy({ where: { refreshToken } });
-      }
-
-      // 3. Очищаем куку в браузере
-      // Важно: параметры (httpOnly) должны совпадать с теми, что были при установке
-      res.clearCookie("refreshToken", {
-        httpOnly: true,
-        // secure: true, // раскомментируй, если используешь https
-      });
-
-      return res.status(200).json({ message: "Вы успешно вышли из системы" });
-    } catch (error) {
-      console.error("Ошибка при выходе:", error);
-      return res.status(500).json({ message: "Произошла ошибка при выходе" });
-    }
-  }
-
-  async check(req, res) {
-    try {
-      // middleware уже проверил токен и положил данные в req.user
-      const user = await User.findByPk(req.user.id);
-      return res.json({
-        user: {
-          id: user.id,
-          email: user.email,
-          role: user.role,
-          username: user.username,
-        },
-      });
-    } catch (e) {
-      return res.status(401).json({ message: "Не залогинен" });
-    }
-  }
-
-  async deleteUser(req, res) {
-    try {
-      const { userId } = req.body;
-
-      console.log("USERID DELETE ", userId);
-
-      const user = await User.destroy({ where: { id: userId } });
-
-      if (user === 0) {
-        return res.status(404).json({ message: "Пользователь не найден" });
-      }
-
-      await Session.destroy({ where: { userId: userId } });
-
-      return res.json({ message: "Пользователь успешно удален", id: userId });
-    } catch (error) {
-      console.log(error);
-      return res.status(500).json({ message: "Ошибка удаления!" });
-    }
-  }
-
-  async reliveUser(req, res) {
-    try {
-      const { userId } = req.body;
-      console.log("USER ID RELIVE ", userId);
-      const user = await User.findByPk(userId, { paranoid: false });
-
-      if (!user) {
-        return res.status(404).json({ message: "Пользователь не найден" });
-      }
-
-      await user.restore();
-
-      return res.json({ message: "Пользователь успешно восстановлен", user });
-    } catch (error) {
-      console.log(error);
-      return res.status(500).json({ message: "Ошибка при восстановлении" });
-    }
   }
 }
 

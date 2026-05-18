@@ -1,26 +1,23 @@
 const { PushSubscription } = require("../models/models");
+const catchAsync = require("../utils/catchAsync");
 const logger = require("../utils/logger");
 
 class SubscribeController {
-  async subscribeUser(req, res) {
-    try {
-      const subscription = req.body;
-      const userId = req.user.id; // или req.body.userId для теста
+  subscribeUser = catchAsync(async (req, res, next) => {
+    const subscription = req.body;
+    const userId = req.user.id;
 
-      console.log("Subscribe, ", userId, subscription);
+    logger.info(subscription, "Пользователь хочет создать подписку");
 
-      // Sequelize метод для "создай или обнови"
-      await PushSubscription.upsert({
-        userId: userId,
-        subscription: subscription,
-      });
+    await PushSubscription.upsert({
+      userId: userId,
+      subscription: subscription,
+    });
 
-      res.status(201).json({ message: "Подписка сохранена через Sequelize" });
-    } catch (error) {
-      console.error("Ошибка Sequelize:", error);
-      res.status(500).json({ error: "Ошибка БД" });
-    }
-  }
+    logger.debug("Возвращаем пользователю ответ о подписке");
+
+    res.status(201).json({ message: "Подписка сохранена через Sequelize" });
+  });
 }
 
 module.exports = new SubscribeController();

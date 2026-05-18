@@ -15,7 +15,7 @@ export const useOnlineStore = create<OnlineState>((set) => ({
     set((state) => {
       const nextSet = new Set(state.onlineIds);
       nextSet.add(Number(userId));
-      return { onlineIds: nextSet }; // Возвращаем новый объект
+      return { onlineIds: nextSet };
     }),
 
   setOffline: (userId) =>

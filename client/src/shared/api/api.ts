@@ -1,5 +1,4 @@
 import { useUserStore } from "@/entities/User/model/store";
-import logger from "@/utils/logger";
 import axios from "axios";
 import { type InternalAxiosRequestConfig } from "axios";
 import { toast } from "sonner";
@@ -9,7 +8,6 @@ export const $api = axios.create({
   withCredentials: true,
 });
 
-// Тип для элементов очереди
 interface FailedRequest {
   resolve: (token: string) => void;
   reject: (error: any) => void;
@@ -66,14 +64,12 @@ $api.interceptors.response.use(
       isRefreshing = true;
       try {
         const response = await axios.post(
-          `${import.meta.env.VITE_API_URL}/api/user/refresh`,
+          `${import.meta.env.VITE_API_URL}/api/auth/refresh`,
           {},
           {
             withCredentials: true,
           },
         );
-
-        console.log("ЗАПРОС ОТПРАВЛЕН И ПРИНЯТ ", response);
 
         const newToken = response.data.user.access_token;
         localStorage.setItem("access_token", newToken);
@@ -93,11 +89,9 @@ $api.interceptors.response.use(
     if (!error.response) {
       const networkError = "Сервер недоступен. Работы уже ведутся!";
 
-      logger.error(
-        { message: error.message },
-        "Ошибка сети (ERR_CONNECTION_REFUSED)",
-      );
-      toast.error(networkError);
+      if (error.message != "Диалога нет") {
+        toast.error(networkError);
+      }
 
       return Promise.reject(error);
     }
@@ -112,21 +106,6 @@ $api.interceptors.response.use(
       409: data?.message || "Пользователь уже существует",
       500: data?.message || "Ошибка сервера",
     };
-
-    if (error.response) {
-      logger.error(
-        {
-          status: error.response.status,
-          data: error.response.data,
-          url: error.config?.url,
-        },
-        "Ошибка сервера",
-      );
-    } else if (error.request) {
-      logger.error({ request: error.request }, "Сервер не ответил");
-    } else {
-      logger.error({ message: error.message }, "Ошибка настройки запроса");
-    }
 
     toast.error(messages[status] || "Что-то пошло не так");
     return Promise.reject(error);

@@ -9,10 +9,8 @@ interface ConversationState {
   getConversations: (userId: number) => Promise<void>;
   incrementUnread: (dialogId: string, userId: string) => void;
 
-  // Универсальный метод для обновления ПОЛЕЙ и поднятия ВВЕРХ
   updateConversation: (id: string, update: Partial<Conversation>) => void;
 
-  // Для добавления нового чата (которого еще нет в списке)
   addConversation: (conversation: Conversation) => void;
 }
 
@@ -23,10 +21,8 @@ export const useConversationListStore = create<ConversationState>((set) => ({
   incrementUnread: (dialogId, userId) => {
     set((state) => {
       const list = [...state.conversations];
-      const index = list.findIndex((c) => c._id === dialogId);
+      const index = list.findIndex((c) => c.id === dialogId);
       if (index === -1) return state;
-
-      console.log("INCREMENT");
 
       const existing = list[index];
       const currentCount = existing.unreadCount?.[userId] || 0;
@@ -41,7 +37,6 @@ export const useConversationListStore = create<ConversationState>((set) => ({
 
       list.splice(index, 1);
 
-      console.log("UPDATED CHAT ", updatedChat);
       return { conversations: [updatedChat, ...list] };
     });
   },
@@ -60,10 +55,8 @@ export const useConversationListStore = create<ConversationState>((set) => ({
 
   updateConversation: (id, update) => {
     set((state) => {
-      // 1. Создаем новый массив, где нужный чат обновлен, а остальные остались прежними
       const updatedConversations = state.conversations.map((c) => {
-        if (String(c._id) === String(id)) {
-          // Создаем абсолютно новый объект чата
+        if (String(c.id) === String(id)) {
           return {
             ...c,
             ...update,
@@ -78,9 +71,8 @@ export const useConversationListStore = create<ConversationState>((set) => ({
         return c;
       });
 
-      // 2. Если нужно поднять обновленный чат вверх списка:
       const chatIndex = updatedConversations.findIndex(
-        (c) => String(c._id) === String(id),
+        (c) => String(c.id) === String(id),
       );
       if (chatIndex === -1) return state;
 
@@ -93,10 +85,8 @@ export const useConversationListStore = create<ConversationState>((set) => ({
 
   addConversation: (conversation) => {
     set((state) => {
-      const exists = state.conversations.some(
-        (c) => c._id === conversation._id,
-      );
-      if (exists) return state; // Чтобы не дублировать
+      const exists = state.conversations.some((c) => c.id === conversation.id);
+      if (exists) return state;
       return { conversations: [conversation, ...state.conversations] };
     });
   },

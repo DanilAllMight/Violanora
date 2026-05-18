@@ -22,7 +22,6 @@ export const RegistrationForm = () => {
 
   const onSubmit = async (data: RegistrationFormData) => {
     const result = await registrationByEmail(data);
-    console.log(result);
     navigate("/");
   };
 

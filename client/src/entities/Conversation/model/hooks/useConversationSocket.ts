@@ -1,9 +1,8 @@
 import { fetchMessages } from "../../api/fetchMessages";
-import { useConversationListStore } from "../store";
+import { useConversationListStore, useConversationStore } from "../store";
 import { useUserStore } from "@/entities/User/model/store";
 import { useSocket } from "@/shared/api";
-import logger from "@/utils/logger";
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 export const useConversationSocket = (targetId: string | undefined) => {
   const [messages, setMessages] = useState<any[]>([]);
@@ -13,75 +12,6 @@ export const useConversationSocket = (targetId: string | undefined) => {
   const user = useUserStore((state) => state.authData);
   const { socket, subscribe } = useSocket(user?.id);
 
-  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
-  const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
-  const pc = useRef<RTCPeerConnection | null>(null);
-
-  const iceCandidatesQueue = useRef<RTCIceCandidateInit[]>([]);
-
-  // В начало хука useConversationSocket
-  const [incomingCall, setIncomingCall] = useState<{
-    from: string;
-    offer: any;
-  } | null>(null); // Когда звонят нам
-
-  const processIceQueue = useCallback(async () => {
-    console.log(
-      "🔄 Обработка накопленной очереди ICE-кандидатов:",
-      iceCandidatesQueue.current.length,
-    );
-    while (iceCandidatesQueue.current.length > 0) {
-      const candidate = iceCandidatesQueue.current.shift();
-      if (candidate && pc.current) {
-        try {
-          await pc.current.addIceCandidate(new RTCIceCandidate(candidate));
-        } catch (e) {
-          console.error("❌ Ошибка при добавлении кандидата из очереди:", e);
-        }
-      }
-    }
-  }, []);
-
-  const setupPeer = useCallback(
-    (id: string) => {
-      const peer = new RTCPeerConnection({
-        iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
-      });
-
-      peer.onicecandidate = (event) => {
-        if (event.candidate && socket?.readyState === WebSocket.OPEN) {
-          socket.send(
-            JSON.stringify({
-              type: "ice-candidate",
-              to: id,
-              payload: event.candidate,
-            }),
-          );
-        }
-      };
-
-      peer.ontrack = (event) => {
-        const stream = event.streams[0];
-        console.log("📍 ПОЛУЧЕН ПОТОК ОТ СОБЕСЕДНИКА:", stream.id);
-        console.log("🔊 Аудио-треков найдено:", stream.getAudioTracks().length);
-
-        if (stream.getAudioTracks().length > 0) {
-          const audioTrack = stream.getAudioTracks()[0];
-          console.log("📊 Статус звука:", {
-            enabled: audioTrack.enabled, // Должно быть true
-            readyState: audioTrack.readyState, // Должно быть 'live'
-          });
-        }
-
-        setRemoteStream(stream);
-      };
-
-      pc.current = peer;
-      return peer;
-    },
-    [socket],
-  );
-
   const getMsgs = useCallback(async () => {
     if (!targetId || !user?.id) return;
     try {
@@ -89,12 +19,11 @@ export const useConversationSocket = (targetId: string | undefined) => {
       const msgs = await fetchMessages({
         senderId: user.id,
         receiverId: targetId,
-        limit: 20, // Ограничиваем первую порцию
+        limit: 20,
       });
       setMessages(msgs);
       setHasMore(msgs.length === 20);
     } catch (e) {
-      logger.error(e, "Failed to fetch messages");
     } finally {
       setIsLoading(false);
     }
@@ -121,7 +50,6 @@ export const useConversationSocket = (targetId: string | undefined) => {
 
       setMessages((prev) => [...olderMsgs, ...prev]);
     } catch (e) {
-      logger.error(e, "Failed to fetch more messages");
     } finally {
       setIsLoading(false);
     }
@@ -136,60 +64,16 @@ export const useConversationSocket = (targetId: string | undefined) => {
       try {
         const data = JSON.parse(event.data);
 
-        if (data.type === "offer") {
-          console.log("Входящий звонок от:", data.from);
-          // Вместо авто-ответа просто открываем модалку
-          setIncomingCall({ from: data.from, offer: data.payload });
-        }
-
-        if (data.type === "hangup") {
-          console.log("Собеседник повесил трубку");
-          // Вызываем твою функцию очистки, которая останавливает стримы и закрывает Peer
-          stopAllTracks();
-        }
-
-        if (data.type === "answer") {
-          if (pc.current) {
-            await pc.current.setRemoteDescription(
-              new RTCSessionDescription(data.payload),
-            );
-
-            // КРИТИЧЕСКИЙ МОМЕНТ: То же самое для вызывающей стороны
-            await processIceQueue();
-          }
-        }
-
-        if (data.type === "ice-candidate") {
-          // Если удаленное описание уже установлено — добавляем сразу
-          if (pc.current?.remoteDescription) {
-            try {
-              await pc.current.addIceCandidate(
-                new RTCIceCandidate(data.payload),
-              );
-            } catch (e) {
-              console.error("Ошибка добавления прямого ICE кандидата:", e);
-            }
-          } else {
-            // Иначе — сохраняем в очередь до востребования
-            console.log(
-              "⏳ Кандидат получен раньше RemoteDescription, сохраняем в очередь",
-            );
-            iceCandidatesQueue.current.push(data.payload);
-          }
-        }
-
         if (data.type === "NEW_MESSAGE") {
           if (
             String(data.senderId) === String(targetId) &&
             String(data.senderId) !== String(user?.id)
           ) {
-            console.log("НОВОЕ СМС", data);
             setMessages((prev) => [...prev, data]);
           }
         }
 
         if (data.type === "SENT_CONFIRMED") {
-          console.log("SENT_CONFIRMED ", data.tempId, data);
           setMessages((prev) =>
             prev.map((msg) =>
               msg.tempId === data.tempId
@@ -197,16 +81,13 @@ export const useConversationSocket = (targetId: string | undefined) => {
                 : msg,
             ),
           );
-          console.log("ОБНОВИЛИ");
         }
 
         if (data.type === "PARTNER_READ_MESSAGES") {
-          console.log("Партнёр прочитал");
           const listStore = useConversationListStore.getState();
           const msgDialogId = String(data.dialogId);
 
           if (msgDialogId) {
-            console.log("ОБНОВЛЯЕМ СТАТУС 2");
             listStore.updateConversation(msgDialogId, {
               lastMessage: { status: "read" },
             });
@@ -215,133 +96,20 @@ export const useConversationSocket = (targetId: string | undefined) => {
           if (String(data.senderId) === String(targetId)) {
             setMessages((prev) =>
               prev.map((msg) =>
-                msg.senderId === user?.id ? { ...msg, status: "read" } : msg,
+                msg.senderId === user?.id || targetId
+                  ? { ...msg, status: "read" }
+                  : msg,
               ),
             );
           }
         }
-      } catch (e) {
-        console.error("ПОЛНАЯ ОШИБКА", e);
-        logger.error(e, "Error parsing socket message");
-      }
+      } catch (e) {}
     });
 
     return () => {
       unsubscribe();
-      localStream?.getTracks().forEach((t) => t.stop());
-      pc.current?.close();
     };
   }, [targetId, user?.id, subscribe, getMsgs]);
-
-  const acceptCall = async () => {
-    if (!incomingCall) return;
-
-    const { from, offer } = incomingCall;
-    const peer = setupPeer(from);
-
-    try {
-      // 1. Запрашиваем доступ к камере/микрофону
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: true,
-      });
-      setLocalStream(stream);
-      stream.getTracks().forEach((track) => peer.addTrack(track, stream));
-
-      // 2. Устанавливаем удаленное описание
-      await peer.setRemoteDescription(new RTCSessionDescription(offer));
-
-      // 3. Прорабатываем очередь ICE-кандидатов (из предыдущего шага)
-      await processIceQueue();
-
-      // 4. Создаем и отправляем ответ
-      const answer = await peer.createAnswer();
-      await peer.setLocalDescription(answer);
-
-      if (socket?.readyState === WebSocket.OPEN) {
-        socket.send(
-          JSON.stringify({
-            type: "answer",
-            to: from,
-            payload: answer,
-          }),
-        );
-      }
-
-      // Очищаем состояние входящего звонка
-      setIncomingCall(null);
-    } catch (e) {
-      console.error("Ошибка при принятии вызова:", e);
-    }
-  };
-
-  const hangUp = () => {
-    // Отправляем сигнал другому
-    socket?.send(JSON.stringify({ type: "hangup", to: targetId }));
-    // Чистим у себя
-    stopAllTracks();
-  };
-
-  const rejectCall = () => {
-    if (incomingCall && socket?.readyState === WebSocket.OPEN) {
-      socket.send(
-        JSON.stringify({
-          type: "hangup", // или "reject"
-          to: incomingCall.from,
-        }),
-      );
-    }
-    setIncomingCall(null);
-    iceCandidatesQueue.current = []; // чистим очередь
-  };
-
-  const startCall = async () => {
-    console.log("ЗАЯВОЧКА НА ЗВОНОК");
-    if (!targetId) return;
-    const peer = setupPeer(targetId);
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: true,
-      audio: true,
-    });
-    setLocalStream(stream);
-    stream.getTracks().forEach((track) => peer.addTrack(track, stream));
-
-    const offer = await peer.createOffer();
-    await peer.setLocalDescription(offer);
-    console.log("ЗАЯВОЧКА НА ЗВОНОК ОТПРАВЛЯЕТСЯ");
-    socket?.send(
-      JSON.stringify({ type: "offer", to: targetId, payload: offer }),
-    );
-  };
-
-  const stopAllTracks = useCallback(() => {
-    // 1. Останавливаем все треки локального стрима (камера и микрофон)
-    if (localStream) {
-      localStream.getTracks().forEach((track) => {
-        track.stop();
-        console.log(`Track ${track.kind} stopped`);
-      });
-    }
-
-    // 2. Закрываем PeerConnection
-    if (pc.current) {
-      // Убираем обработчики, чтобы они не стреляли после закрытия
-      pc.current.onicecandidate = null;
-      pc.current.ontrack = null;
-      pc.current.close();
-      pc.current = null;
-    }
-
-    // 3. Очищаем очередь кандидатов
-    iceCandidatesQueue.current = [];
-
-    // 4. Сбрасываем стейты стримов для UI
-    setLocalStream(null);
-    setRemoteStream(null);
-    setIncomingCall(null);
-    // Если у тебя был стейт callAccepted или isCalling, сбрось и их
-    // setCallAccepted(false);
-  }, [localStream]);
 
   const sendMessage = (
     text: string,
@@ -350,7 +118,6 @@ export const useConversationSocket = (targetId: string | undefined) => {
     const tempId = Date.now().toString();
 
     if (socket?.readyState === WebSocket.OPEN) {
-      // Отправляем на сервер (тип "MESSAGE" как у тебя в коде)
       socket.send(
         JSON.stringify({
           to: targetId,
@@ -382,12 +149,5 @@ export const useConversationSocket = (targetId: string | undefined) => {
     fetchMoreMessages,
     hasMore,
     isLoading,
-    startCall,
-    localStream,
-    remoteStream,
-    hangUp,
-    acceptCall,
-    rejectCall,
-    incomingCall,
   };
 };

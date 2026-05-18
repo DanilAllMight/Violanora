@@ -8,7 +8,6 @@ export const UserAvatar = ({ avatar_url }: UserAvatarProps) => {
   return (
     <div className="flex h-14 w-14 items-center pr-2">
       <picture className="overflow-hidden rounded-full border border-slate-200">
-        {/* Если есть src (WebP из Supabase), подставляем его в source */}
         {avatar_url && <source srcSet={avatar_url} type="image/webp" />}
         <img
           loading="lazy"

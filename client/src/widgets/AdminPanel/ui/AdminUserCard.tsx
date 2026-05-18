@@ -18,8 +18,6 @@ export const AdminUserCard = ({
 }: AdminUserCardProps) => {
   const isOnline = useOnlineStore((state) => state.onlineIds.has(user.id));
 
-  console.log("online time: ", user.online_time);
-
   return (
     <li>
       <article className="bg-app-card grid grid-cols-[auto_1fr_auto] items-center rounded-2xl border border-gray-50/50 p-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">

@@ -16,8 +16,6 @@ export const ProfileEditForm = ({ setIsEdit }: ProfileEditFormProps) => {
 
   const [usrname, setUsrname] = useState(username);
 
-  console.log("Начинаем отображений 2");
-
   const {
     register,
     handleSubmit,
@@ -35,7 +33,6 @@ export const ProfileEditForm = ({ setIsEdit }: ProfileEditFormProps) => {
       };
       const result = await updateProfileData(_data);
       setIsEdit(false);
-      console.log(result);
     } catch (error) {}
   };
 

@@ -2,8 +2,6 @@ import type { Message } from "../model/types/Message";
 import { MessageAttachments } from "./MessageAttachments";
 import { Check, CheckCheck, Clock } from "lucide-react";
 
-// импортируй созданный ранее компонент
-
 interface MessageCardProps {
   msg: Message;
   isMe: boolean;
@@ -25,12 +23,10 @@ export const MessageCard = ({ msg, isMe, username }: MessageCardProps) => {
       {hasAttachments && (
         <div className="p-1">
           {" "}
-          {/* Небольшой отступ для картинок */}
           <MessageAttachments attachments={msg.attachments} />
         </div>
       )}
 
-      {/* Текстовый контент */}
       <div className="px-3 pt-1 pb-2">
         <div
           className={`mb-1 text-[10px] font-bold tracking-wider uppercase opacity-70`}

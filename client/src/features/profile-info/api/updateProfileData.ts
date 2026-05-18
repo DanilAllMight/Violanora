@@ -9,11 +9,9 @@ interface UpdateProfileDataProps {
 }
 
 export const updateProfileData = async (data: UpdateProfileDataProps) => {
-  console.log("data update, ", data);
   try {
     const response = await $api.post<ProfileResponse>("/api/user/update", data);
     if (response && response.data) {
-      console.log("ВЫЗЫВАЕМ СОСТОЯНИЕ");
       useUserStore.getState().setUserData(response.data.user);
       return response.data;
     }

@@ -25,11 +25,8 @@ export const ProfileCard = () => {
         const data = await uploadAvatar(myId, file);
 
         setAvatar(data.url);
-        console.log("Файл успешно сохранен в БД:", data.url);
       }
     } catch (error) {
-      console.error("Загрузка не удалась:", error);
-
       toast.error("Не удалось сохранить аватар на сервере");
     } finally {
       setIsUploading(false);
@@ -39,8 +36,6 @@ export const ProfileCard = () => {
   const handleView = () => {
     if (avatar_url) window.open(avatar_url, "_blank");
   };
-
-  console.log("Начинаем отображений 1");
 
   return (
     <div className="bg-app-bg flex w-full items-center gap-6 rounded-2xl border border-slate-100 p-6 shadow-sm">

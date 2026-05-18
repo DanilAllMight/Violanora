@@ -12,8 +12,6 @@ export const UserCard = ({ user }: UserCardProps) => {
   const myId = useUserStore.getState().authData?.id;
   const isOnline = useOnlineStore((state) => state.onlineIds.has(user.id));
 
-  console.log("role ", user.role);
-
   const handleClick = () => {
     if (myId) {
       navigate(`/chat/${user.id}/${user.username}`);

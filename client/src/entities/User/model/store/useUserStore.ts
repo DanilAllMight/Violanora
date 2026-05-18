@@ -18,8 +18,6 @@ export const useUserStore = create<UserSchema & UserActions>()(
       setUserData: (user: UserData) =>
         set((state) => {
           if (!state.authData) return state;
-          console.log("UPDATED1 ");
-          console.log("UPDATED ", user);
           return {
             authData: {
               ...state.authData,
@@ -29,11 +27,11 @@ export const useUserStore = create<UserSchema & UserActions>()(
         }),
       logout: () => {
         set({ authData: undefined });
-        localStorage.removeItem("token"); // если хранишь токен отдельно
+        localStorage.removeItem("token");
       },
       setAvatar: (url: string) =>
         set((state) => {
-          if (!state.authData) return state; // Если данных нет, ничего не меняем
+          if (!state.authData) return state;
 
           return {
             authData: {
@@ -44,8 +42,8 @@ export const useUserStore = create<UserSchema & UserActions>()(
         }),
     }),
     {
-      name: "user-storage", // автоматически сохранит в LocalStorage
-      partialize: (state) => ({ authData: state.authData }), // сохраняем только данные юзера
+      name: "user-storage",
+      partialize: (state) => ({ authData: state.authData }),
     },
   ),
 );

@@ -1,4 +1,4 @@
-require("dotenv").config(); // Это подтянет DATABASE_URL из твоего .env
+require("dotenv").config();
 
 module.exports = {
   development: {

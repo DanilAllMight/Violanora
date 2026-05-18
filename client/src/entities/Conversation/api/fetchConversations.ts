@@ -7,7 +7,6 @@ export const fetchConversations = ({ userId }: ConversationRequest) => {
     const response = $api.get<ConversationListResponse>(
       `api/conversation/conversations/${userId}`,
     );
-    console.log("FETCH CONVERSATIONS ", response);
 
     return response;
   } catch (err) {}

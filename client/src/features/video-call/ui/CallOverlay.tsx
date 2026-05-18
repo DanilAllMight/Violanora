@@ -15,7 +15,6 @@ export const CallOverlay = ({
   return (
     <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-slate-950 p-4">
       <div className="relative grid h-[70vh] w-full max-w-5xl grid-cols-1 gap-4 md:grid-cols-2">
-        {/* 1. Видео собеседника — УБИРАЕМ muted (по умолчанию в VideoPlayer он false, но здесь важно не поставить true) */}
         <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl">
           <p className="absolute bottom-4 left-4 z-10 rounded bg-black/40 px-2 py-1 text-sm text-white">
             Собеседник
@@ -23,7 +22,6 @@ export const CallOverlay = ({
           <VideoPlayer stream={remoteStream} muted={false} />
         </div>
 
-        {/* 2. Ваше видео — muted={true} ОБЯЗАТЕЛЬНО, чтобы не было эха */}
         <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl">
           <p className="absolute bottom-4 left-4 z-10 rounded bg-black/40 px-2 py-1 text-sm text-white">
             Вы (Локально)
@@ -32,7 +30,6 @@ export const CallOverlay = ({
         </div>
       </div>
 
-      {/* Кнопка сброса */}
       <button
         aria-label="Закончить звонок"
         onClick={onHangUp}

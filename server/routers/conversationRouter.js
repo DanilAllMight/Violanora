@@ -1,17 +1,23 @@
 const express = require("express");
 const conversationConroller = require("../controllers/conversation-controller");
 const authMiddleware = require("../middlewares/authMiddleware");
+const catchAsync = require("../utils/catchAsync");
 const router = express.Router();
 
 router.get(
   "/conversations/:userId",
   authMiddleware,
-  conversationConroller.getConversations,
+  catchAsync((req, res, next) =>
+    conversationConroller.getConversations(req, res, next),
+  ),
 );
+
 router.get(
   "/conversation/:userId/:partnerId",
   authMiddleware,
-  conversationConroller.getConversation,
+  catchAsync((req, res, next) =>
+    conversationConroller.getConversation(req, res, next),
+  ),
 );
 
 module.exports = router;

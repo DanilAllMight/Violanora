@@ -4,10 +4,10 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 Object.defineProperty(window, "matchMedia", {
   writable: true,
   value: vi.fn().mockImplementation((query) => ({
-    matches: false, // по умолчанию "светлая" тема
+    matches: false,
     media: query,
     onchange: null,
-    addListener: vi.fn(), // устарело, но нужно для совместимости
+    addListener: vi.fn(),
     removeListener: vi.fn(),
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
@@ -17,15 +17,11 @@ Object.defineProperty(window, "matchMedia", {
 
 describe("initTheme", () => {
   beforeEach(() => {
-    // 1. Очищаем localStorage перед каждым тестом
     vi.resetModules();
     vi.clearAllMocks();
     localStorage.clear();
-    // 2. Сбрасываем классы на <html>
     document.documentElement.className = "";
-    // 3. Удаляем стили
     document.documentElement.style.removeProperty("--app-accent");
-    // 4. Очищаем все моки
     vi.restoreAllMocks();
   });
 
@@ -38,7 +34,6 @@ describe("initTheme", () => {
   });
 
   it('должен удалить класс .dark, если в localStorage сохранено "light"', () => {
-    // Сначала добавим, чтобы проверить удаление
     document.documentElement.classList.add("dark");
     localStorage.setItem("theme", "light");
 
@@ -48,7 +43,6 @@ describe("initTheme", () => {
   });
 
   it("должен использовать системную темную тему, если localStorage пуст", () => {
-    // Мокаем matchMedia, чтобы он вернул true (системная тема темная)
     vi.stubGlobal(
       "matchMedia",
       vi.fn().mockImplementation((query) => ({

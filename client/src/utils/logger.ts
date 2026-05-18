@@ -2,7 +2,7 @@ import pino from "pino";
 
 const logger = pino({
   browser: {
-    asObject: true, // Logs appear as expandable objects in DevTools
+    asObject: true,
   },
   level: import.meta.env.MODE === "development" ? "debug" : "info",
   transport: {

@@ -1,11 +1,10 @@
 import { fetchUsersForAdmin } from "../../api";
 import { fetchUsers } from "../../api/fetchUsers";
 import { type User } from "../types/userList";
-// Импорт базового типа
 import { create } from "zustand";
 
 interface UsersListSchema {
-  users: User[]; // Здесь всегда массив объектов типа User
+  users: User[];
   isLoading: boolean;
   error?: string;
   getUsers: () => Promise<void>;

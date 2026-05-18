@@ -1,25 +1,23 @@
+const AppError = require("../utils/appError");
+const catchAsync = require("../utils/catchAsync"); // если хочешь оставить внутри
+const logger = require("../utils/logger");
+const errorMsg = require("../constants/errorMessages");
+
 module.exports = function (roles) {
-  return function (req, res, next) {
-    try {
-      console.log("ROLE MIDDLEWARE 1", req.user);
-      // 1. Проверяем, есть ли данные о пользователе (которые положил authMiddleware)
-      if (!req.user) {
-        return res.status(401).json({ message: "Пользователь не авторизован" });
-      }
+  return catchAsync(async (req, res, next) => {
+    logger.info(req.user, "Role Middleware начало работы");
 
-      console.log("ROLE MIDDLEWARE ", req.user);
-
-      // 2. Достаем роль из userData (убедись, что при создании токена ты записывал туда role)
-      const role = req.role;
-
-      // 3. Проверяем, входит ли роль пользователя в список разрешенных
-      if (!roles.includes(role)) {
-        return res.status(403).json({ message: "У вас нет прав доступа" });
-      }
-
-      next(); // Все хорошо, пропускаем дальше
-    } catch (e) {
-      return res.status(403).json({ message: "Ошибка доступа" });
+    if (!req.user) {
+      throw new AppError(errorMsg.NOT_AUTHORIZED, 401);
     }
-  };
+
+    const role = req.role;
+
+    if (!roles.includes(role)) {
+      throw new AppError(errorMsg.USER_NOT_ACCESS, 403);
+    }
+
+    logger.info("Пользователю разрешён доступ");
+    next();
+  });
 };

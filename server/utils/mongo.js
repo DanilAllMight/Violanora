@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const logger = require("./logger");
 require("dotenv").config();
 
 const mongoURI =
@@ -6,11 +7,11 @@ const mongoURI =
 
 async function connectDB() {
   try {
-    console.log("ENV ", process.env.MONGO_URI);
+    logger.debug({ mongoURI }, "Запускаем mongo");
     await mongoose.connect(mongoURI);
-    console.log("✅ Локальная MongoDB успешно подключена");
+    logger.debug("Подключено к mongo");
   } catch (err) {
-    console.error("❌ Ошибка подключения:", err.message);
+    logger.error(err, "Ошибка подключения");
     process.exit(1);
   }
 }

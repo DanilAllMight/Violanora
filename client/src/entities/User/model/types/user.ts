@@ -10,7 +10,7 @@ export interface UserAuth {
 
 export interface UserSchema {
   authData?: UserAuth;
-  _inited: boolean; // флаг, что мы проверили токен при загрузке
+  _inited: boolean;
 }
 
 export interface UserData {

@@ -1,30 +1,24 @@
 const webpush = require("../config/web-push-config");
 const { PushSubscription } = require("../models/models");
+const logger = require("../utils/logger");
 
 const sendNotificationToUser = async (userId, title, body, url = "/") => {
   try {
-    // Ищем запись в базе
-    console.log("1");
-
+    logger.debug("Начало отправки уведомления");
     const userSub = await PushSubscription.findOne({ where: { userId } });
 
-    console.log("2");
-
-    if (!userSub) return;
-
-    console.log("3");
+    if (!userSub) {
+      logger.debug("Пользователя нет в базе уведомлений");
+      return;
+    }
 
     const payload = JSON.stringify({ title, body, url });
 
-    console.log("4");
-
     await webpush.sendNotification(userSub.subscription, payload);
-
-    console.log("ОТПРАВИЛИ УВЕДОМЛЕНИЕ");
+    logger.debug(payload, "Уведомление отправлено");
   } catch (error) {
-    console.log(error);
+    logger.error(error, "Ошибка отправки уведомления");
     if (error.statusCode === 410) {
-      // Удаляем невалидную подписку
       await PushSubscription.destroy({ where: { userId } });
     }
   }

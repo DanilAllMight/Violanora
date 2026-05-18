@@ -13,11 +13,11 @@ export interface ChatPartner {
 
 // не используется
 export interface Conversation {
-  _id: string; // ID диалога из MongoDB
-  matchKey: string; // Твой ключ "1_2"
-  participants: ChatPartner[]; // Массив из двух объектов пользователей
+  id: string;
+  matchKey: string;
+  participants: ChatPartner[];
   lastMessage: LastMessage;
-  unreadCount: Record<string, number>; // { "1": 5, "2": 0 }
+  unreadCount: Record<string, number>;
   updatedAt: string;
 }
 

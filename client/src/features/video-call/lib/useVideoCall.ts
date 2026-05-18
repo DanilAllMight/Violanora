@@ -1,4 +1,3 @@
-// features/video-call/lib/useVideoCall.ts
 import { useRef, useState } from "react";
 
 export const useVideoCall = (socket: WebSocket | null) => {
@@ -8,13 +7,11 @@ export const useVideoCall = (socket: WebSocket | null) => {
   const peerConnection = useRef<RTCPeerConnection | null>(null);
   const localVideoRef = useRef<HTMLVideoElement>(null);
 
-  // Инициализация RTCPeerConnection
   const initPeerConnection = (targetUserId: string) => {
     const pc = new RTCPeerConnection({
       iceServers: [{ urls: "stun:://google.com" }],
     });
 
-    // Когда браузер находит ICE-кандидата (свой адрес), отправляем его через сокет
     pc.onicecandidate = (event) => {
       if (event.candidate && socket) {
         socket.send(
@@ -27,7 +24,6 @@ export const useVideoCall = (socket: WebSocket | null) => {
       }
     };
 
-    // Когда получаем поток от собеседника
     pc.ontrack = (event) => {
       setRemoteStream(event.streams[0]);
     };
@@ -36,7 +32,6 @@ export const useVideoCall = (socket: WebSocket | null) => {
     return pc;
   };
 
-  // Функция начала звонка (создание Offer)
   const startCall = async (targetUserId: string) => {
     const stream = await navigator.mediaDevices.getUserMedia({
       video: true,
@@ -59,7 +54,6 @@ export const useVideoCall = (socket: WebSocket | null) => {
     );
   };
 
-  // Обработка входящих сообщений WebRTC
   const handleSignal = async (message: any) => {
     const { type, payload, from } = message;
 

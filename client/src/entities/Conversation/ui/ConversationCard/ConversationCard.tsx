@@ -8,16 +8,13 @@ import { Check, CheckCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
-// Если используешь Lucide, если нет — заменим на символы
-
 export const ConversationCard = ({ conversation }: ConversationCardProps) => {
   const navigate = useNavigate();
   const user = useUserStore((state) => state.authData);
   const myId = user?.id;
 
-  // Достаем актуальные данные диалога из стора списка
   const currentChat = useConversationListStore((state) =>
-    state.conversations.find((c) => c._id === conversation._id),
+    state.conversations.find((c) => c.id === conversation.id),
   );
 
   if (!myId) return null;
@@ -34,18 +31,14 @@ export const ConversationCard = ({ conversation }: ConversationCardProps) => {
     partner ? state.onlineIds.has(Number(partner.id)) : false,
   );
 
-  // Используем данные из стора (currentChat), а если их нет — из пропса
   const totalUnread =
     currentChat?.unreadCount?.[myId] ?? conversation.unreadCount[myId] ?? 0;
   const lastMsg = currentChat?.lastMessage ?? conversation.lastMessage;
   const isMine = String(lastMsg.senderId) === String(myId);
 
-  console.log("Conversation ", conversation);
-  console.log("STATUS MSG ", lastMsg.status);
-
   const handleClick = () => {
     if (partner) {
-      const dialogId = conversation._id;
+      const dialogId = conversation.id;
       useConversationStore
         .getState()
         .setActiveDialog(dialogId, partner.username, partner.avatar_url);
@@ -93,7 +86,6 @@ export const ConversationCard = ({ conversation }: ConversationCardProps) => {
           </div>
         </div>
 
-        {/* Правая колонка: только счетчик или статус (центрирование за счет сетки grid) */}
         <div>
           {totalUnread ? (
             <div className="bg-app-accent flex h-6 w-6 rounded-full">

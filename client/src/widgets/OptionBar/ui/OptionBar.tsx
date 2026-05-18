@@ -14,7 +14,6 @@ export const OptionBar = () => {
   const isAdmin = userRole == "ADMIN";
 
   const logout_ = () => {
-    console.log("OPTION LOG OUT");
     logout();
     useUserStore.getState().logout();
   };
@@ -42,8 +41,8 @@ export const OptionBar = () => {
         <DropdownMenu.Portal>
           <DropdownMenu.Content className="bg-app-card border-app-icon z-50 min-w-[200px] rounded-2xl border p-2 shadow-xl">
             <DropdownMenu.Item
-              onSelect={(e) => e.preventDefault()} // Чтобы меню не закрылось
-              onClick={toggleTheme} // Клик по всему пункту переключает тему
+              onSelect={(e) => e.preventDefault()}
+              onClick={toggleTheme}
               className="hover:bg-app-nav text-app-text flex cursor-pointer items-center justify-between rounded-xl p-3 transition-colors outline-none"
             >
               <div className="flex items-center gap-2 font-medium">
@@ -81,7 +80,7 @@ export const OptionBar = () => {
                   {colors.map((color) => (
                     <DropdownMenu.Item
                       key={color.value}
-                      onSelect={() => setAccent(color.value)} // Теперь цвет сохранится навсегда
+                      onSelect={() => setAccent(color.value)}
                       className="focus:bg-app-nav flex items-center gap-2 rounded-xl px-3 py-3 outline-none"
                     >
                       <div

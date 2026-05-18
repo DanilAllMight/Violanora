@@ -1,13 +1,13 @@
 import * as Label from "@radix-ui/react-label";
-import { forwardRef, type InputHTMLAttributes } from "react";
 import { Eye, EyeOff } from "lucide-react";
+import { forwardRef, type InputHTMLAttributes } from "react";
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
-  isIconVisible?: boolean; // Состояние: открыт глаз или закрыт
-  showIcon?: boolean; // Нужно ли вообще показывать глаз в этом инпуте
-  onIconClick?: () => void; // Функция клика по глазу
+  isIconVisible?: boolean;
+  showIcon?: boolean;
+  onIconClick?: () => void;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
@@ -22,7 +22,6 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         </Label.Root>
       )}
 
-      {/* Обертка для позиционирования иконки */}
       <div className="relative flex w-full items-center">
         <input
           id={id}
@@ -33,10 +32,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           {...props}
         />
 
-        {/* Кнопка с глазиком */}
         {showIcon && (
           <button
-            type="button" // Чтобы не срабатывал сабмит формы
+            type="button"
             onClick={onIconClick}
             className="absolute right-3 text-gray-400 transition-colors hover:text-gray-600 focus:outline-none"
           >

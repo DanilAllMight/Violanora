@@ -7,7 +7,6 @@ interface DeleteUserProps {
 
 export const deleteUser = async (data: DeleteUserProps) => {
   try {
-    console.log("УДАЛЯЮ USERА с id ", data.userId);
     const response = await $api.post("/api/user/delete", data);
     if (response && response.data) {
       toast.success("Пользователь успешно удалён");

@@ -20,7 +20,6 @@ export const formatOnlineTime = (dateInput: string | Date): string => {
     return `${diffInHours} часов назад`;
   }
 
-  // Проверка на "вчера"
   const yesterday = new Date();
   yesterday.setDate(now.getDate() - 1);
   const isYesterday = date.toDateString() === yesterday.toDateString();
@@ -34,7 +33,6 @@ export const formatOnlineTime = (dateInput: string | Date): string => {
     return `вчера в ${time}`;
   }
 
-  // Если больше 2 дней назад — число и месяц
   const dayMonth = date.toLocaleDateString("ru-RU", {
     day: "numeric",
     month: "long",

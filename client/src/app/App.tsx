@@ -27,10 +27,7 @@ function App() {
         if (event.data?.type === "PUSH_RECEIVED") {
           const { title, body, url } = event.data.payload;
 
-          console.log("URL ", url);
-
           if (location.pathname === url) {
-            console.log("Уведомление подавлено: пользователь уже в этом чате");
             return;
           }
 
@@ -48,11 +45,10 @@ function App() {
   }, [location.pathname]);
 
   useEffect(() => {
-    console.log("USE EFFECT APP TSX");
     const check = async () => {
       if (isAuth) {
         try {
-          await $api.post(`${import.meta.env.VITE_API_URL}/api/user/check`);
+          await $api.post(`${import.meta.env.VITE_API_URL}/api/auth/check`);
         } catch (error) {}
       }
       setIsInited(true);
@@ -61,21 +57,18 @@ function App() {
     const syncSubscription = async () => {
       let permission = Notification.permission;
 
-      // Если еще не спрашивали — спрашиваем
       if (permission === "default") {
         permission = await Notification.requestPermission();
       }
 
-      console.log("CURRENT PERMISSION:", permission);
       if (isAuth && Notification.permission === "granted") {
-        console.log("START SUBSCRIBE");
         await subscribe();
       }
     };
 
     syncSubscription();
     check();
-  }, [isAuth, subscribe]); // Добавили зависимости для надежности
+  }, [isAuth, subscribe]);
 
   if (!isInited) {
     return <PageLoader />;

@@ -1,4 +1,3 @@
-// features/push-notifications/ui/PushBanner/PushBanner.tsx
 import { usePushSubscription } from "../model/hooks/usePushSubscriprion";
 import * as AccessibleIcon from "@radix-ui/react-accessible-icon";
 import { BellIcon, Cross2Icon } from "@radix-ui/react-icons";
@@ -15,14 +14,8 @@ export const PushBanner = ({ isAuth }: PushBannerProps) => {
   const { subscribe } = usePushSubscription();
 
   useEffect(() => {
-    // Проверка на наличие API уведомлений (защита от ошибок в старых браузерах)
     if (typeof window === "undefined" || !("Notification" in window)) return;
-
     const checkVisibility = () => {
-      // Баннер нужен только если:
-      // 1. Пользователь авторизован
-      // 2. Статус уведомлений "default" (еще не разрешил и не запретил)
-      // 3. Он не закрывал этот баннер ранее (проверяем localStorage)
       const isDismissed = localStorage.getItem(BANNER_STORAGE_KEY);
       const isDefaultPermission = Notification.permission === "default";
 
@@ -33,7 +26,6 @@ export const PushBanner = ({ isAuth }: PushBannerProps) => {
       }
     };
 
-    // Небольшая задержка помогает мобильным браузерам корректно определить статус Notification.permission
     const timer = setTimeout(checkVisibility, 1000);
 
     return () => clearTimeout(timer);
@@ -41,23 +33,18 @@ export const PushBanner = ({ isAuth }: PushBannerProps) => {
 
   const handleSubscribe = async () => {
     try {
-      // Запрашиваем разрешение
       const permission = await Notification.requestPermission();
 
       if (permission === "granted") {
         await subscribe();
         setIsVisible(false);
       } else if (permission === "denied") {
-        // Если пользователь нажал "Блокировать" в системном окне, скрываем баннер
         setIsVisible(false);
       }
-    } catch (error) {
-      console.error("Ошибка при подписке:", error);
-    }
+    } catch (error) {}
   };
 
   const handleDismiss = () => {
-    // Используем localStorage, чтобы баннер не всплывал после перезагрузки
     localStorage.setItem(BANNER_STORAGE_KEY, "true");
     setIsVisible(false);
   };

@@ -1,7 +1,5 @@
-// initTheme.ts
 export const initTheme = () => {
   const savedTheme = localStorage.getItem("theme");
-  // Проверяем matchMedia только если мы в браузере (для безопасности тестов)
   const systemDark =
     typeof window !== "undefined"
       ? window.matchMedia("(prefers-color-scheme: dark)").matches

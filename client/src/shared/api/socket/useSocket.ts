@@ -1,4 +1,3 @@
-//import logger from "@/utils/logger";
 import { useState, useEffect, useCallback } from "react";
 
 let globalSocket: WebSocket | null = null;
@@ -12,7 +11,6 @@ export const useSocket = (userId: number | undefined) => {
     let heartbeatTimer: NodeJS.Timeout;
 
     const connect = () => {
-      // Если нет ID или сокет уже открыт — ничего не делаем
       if (
         !userId ||
         (globalSocket && globalSocket.readyState === WebSocket.OPEN)
@@ -23,11 +21,9 @@ export const useSocket = (userId: number | undefined) => {
       const ws = new WebSocket(`${baseUrl}?userId=${userId}`);
 
       ws.onopen = () => {
-        console.log("WSS: Соединение установлено");
         globalSocket = ws;
         setSocket(ws);
 
-        // 1. Пинг-понг для Nginx (Heartbeat)
         heartbeatTimer = setInterval(() => {
           if (ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({ type: "ping" }));
@@ -36,7 +32,6 @@ export const useSocket = (userId: number | undefined) => {
       };
 
       ws.onmessage = (event) => {
-        // Пропускаем системные сообщения (если сервер шлет 'pong')
         try {
           const data = JSON.parse(event.data);
           if (data.type === "pong") return;
@@ -46,31 +41,22 @@ export const useSocket = (userId: number | undefined) => {
       };
 
       ws.onclose = (event) => {
-        console.log(
-          `WSS: Соединение закрыто (код: ${event.code}). Реконнект через 3 сек...`,
-        );
-
-        // Очистка перед новой попыткой
         clearInterval(heartbeatTimer);
         globalSocket = null;
         setSocket(null);
 
-        // 2. АВТО-РЕКОННЕКТ
-        // Не пытаемся соединиться, если закрыли намеренно (код 1000)
         if (event.code !== 1000) {
           reconnectTimer = setTimeout(connect, 3000);
         }
       };
 
       ws.onerror = (error) => {
-        console.error("WSS: Ошибка сокета", error);
-        ws.close(); // Провоцируем onclose для запуска реконнекта
+        ws.close();
       };
     };
 
     connect();
 
-    // 3. Cleanup: Очистка таймеров при размонтировании или смене userId
     return () => {
       clearTimeout(reconnectTimer);
       clearInterval(heartbeatTimer);

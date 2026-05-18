@@ -6,7 +6,7 @@ const connectionString =
 
 const sequelize = new Sequelize(connectionString, {
   dialect: "postgres",
-  logging: false, // Отключаем логи в консоли, чтобы не спамить (по желанию)
+  logging: false,
   dialectOptions: {
     ssl: false,
   },

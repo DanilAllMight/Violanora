@@ -1,12 +1,14 @@
 const express = require("express");
 const router = express.Router();
 const userRouter = require("./userRouter.js");
-const chatRouter = require("./chatRouter.js");
+const authRouter = require("./authRouter.js");
+const messageRouter = require("./messageRouter.js");
 const conversationtRouter = require("./conversationRouter.js");
-const subscribeRouter = require("./subscribe.js");
+const subscribeRouter = require("./subscribeRouter.js");
 
 router.use("/user", userRouter);
-router.use("/chat", chatRouter);
+router.use("/auth", authRouter);
+router.use("/chat", messageRouter);
 router.use("/conversation", conversationtRouter);
 router.use("/subscribe", subscribeRouter);
 

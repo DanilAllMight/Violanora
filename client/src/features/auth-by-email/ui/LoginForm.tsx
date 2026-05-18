@@ -23,7 +23,6 @@ export const LoginForm = () => {
   const onSubmit = async (data: LoginFormData) => {
     try {
       const result = await loginByEmail(data);
-      console.log(result);
       navigate("/");
     } catch (error) {}
   };

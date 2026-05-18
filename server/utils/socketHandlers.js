@@ -1,9 +1,13 @@
 const { Dialog } = require("../models/Dialog");
 const { Message } = require("../models/Message");
 const { User } = require("../models/models");
+const dialogRepository = require("../repositories/dialog-repository");
+const messageRepository = require("../repositories/message-repository");
+const userRepository = require("../repositories/user-repository");
 const { sendNotificationToUser } = require("../services/notification-service");
 const logger = require("./logger");
 const WebSocket = require("ws");
+const socketMsg = require("../constants/socketMessages.js");
 
 function createHandlers(clients, onlineUsers, getSingleConversation) {
   const send = (to, data) => {
@@ -16,50 +20,67 @@ function createHandlers(clients, onlineUsers, getSingleConversation) {
   return {
     handleTyping: (userId, data) => {
       const { to, type, dialogId } = data;
-      logger.info(`handleTyping, TYPE=${type}`);
+      logger.debug("Отправляем сообщение о печатании");
       send(to, { type, senderId: userId, dialogId });
     },
 
+    handlePingPong: async (ws) => {
+      logger.debug("Отправляем сообщение для проверки онлайна");
+      ws.send(
+        JSON.stringify({
+          type: socketMsg.SERVER_PING_PONG,
+        }),
+      );
+    },
+
+    handleVideoCall: async (clients, data, userId) => {
+      const targetClient = clients.get(String(data.to));
+
+      if (targetClient && targetClient.readyState === WebSocket.OPEN) {
+        targetClient.send(
+          JSON.stringify({
+            type: data.type,
+            payload: data.payload,
+            from: userId,
+          }),
+        );
+        logger.debug(
+          { type: data.type, userId, to: data.to },
+          "Сообщение отправлено",
+        );
+      } else {
+        logger.debug(data.to, "Пользователь не в сети");
+      }
+    },
+
     handleMarkAsRead: async (userId, data, ws) => {
-      const dialog = await Dialog.findByIdAndUpdate(data.dialogId, {
-        $set: { [`unreadCount.${userId}`]: 0 },
-      });
+      logger.debug("MARK AS READ");
+      const dialogId = data.dialogId;
+      logger.debug({ dialogId: dialogId });
+      const dialog = await dialogRepository.clearUnreadcount(userId, dialogId);
       const partner = dialog.participants.find(
         (p) => String(p) !== String(userId),
       );
-      console.log(
-        "PARTNER USERID",
-        partner,
-        " ",
-        userId,
-        " ",
-        dialog.participants,
+
+      logger.debug(
+        { partner, userId, participants: dialog.participants },
+        "Пользователь прочитал сообщение сразу",
       );
 
-      await Message.updateMany(
-        {
-          dialogId: data.dialogId,
-          senderId: partner, // сообщения от партнера
-          status: "sent", // которые еще не прочитаны
-        },
-        { $set: { status: "read" } },
-      );
-      await Dialog.findByIdAndUpdate(data.dialogId, {
-        $set: { "lastMessage.status": "read" },
-      });
+      await messageRepository.markMessagesAsRead(dialogId, partner);
+      await dialogRepository.updateLastMessage(dialogId);
 
-      logger.info("В том же чате");
-      console.log("PARTNER_READ_MESSAGES ", String(partner));
+      logger.debug(partner, "Отправляем сообщение партнёру");
       send(String(partner), {
-        type: "PARTNER_READ_MESSAGES",
+        type: socketMsg.SERVER_PARTNER_READ_MESSAGE,
         senderId: userId,
         dialogId: data.dialogId,
       });
       if (ws.readyState === WebSocket.OPEN) {
-        console.log("PARTNER_READ_MESSAGES  2 ");
+        logger.debug(partner, "Отправляем сообщение отправителю");
         ws.send(
           JSON.stringify({
-            type: "PARTNER_READ_MESSAGES",
+            type: socketMsg.SERVER_PARTNER_READ_MESSAGE,
             senderId: userId,
             dialogId: data.dialogId,
           }),
@@ -70,7 +91,10 @@ function createHandlers(clients, onlineUsers, getSingleConversation) {
     handleMessage: async (ws, userId, data) => {
       try {
         const { to, text, tempId, attachments } = data;
-        console.log("СООБЩЕНИЕ ПОЛУЧЕНО");
+        logger.debug(
+          { to, text, tempId, attachments },
+          "Начало обработки сообщения",
+        );
         if (
           !to ||
           !tempId ||
@@ -79,7 +103,7 @@ function createHandlers(clients, onlineUsers, getSingleConversation) {
           return;
         }
 
-        console.log("ПРОДОЛЖЕНО ", tempId);
+        logger.debug("Проверка пройдена");
 
         const sTo = String(to);
         const sUserId = String(userId);
@@ -102,28 +126,53 @@ function createHandlers(clients, onlineUsers, getSingleConversation) {
           dialogUpdate.$inc = { [`unreadCount.${sTo}`]: 1 };
         }
 
-        const dialog = await Dialog.findOneAndUpdate(
-          { matchKey },
+        const dialog = await dialogRepository.updateDialog(
+          matchKey,
           dialogUpdate,
-          { upsert: true, new: true },
         );
 
-        const newMessage = await Message.create({
+        const create_data = {
           dialogId: dialog._id,
           senderId: sUserId,
           text: text || "",
           attachments: attachments || [],
           receiverId: sTo,
-        });
+        };
 
-        console.log(`📩 Сообщение сохранено в диалог ${dialog._id} ${text}`);
+        const newMessage = await messageRepository.create(create_data);
 
-        const user = await User.findByPk(sTo);
-        const sender = await User.findByPk(sUserId);
-        //console.log("FCM TOKEN USER ", user);
+        logger.debug(newMessage, "Сообщение сохранено");
+
+        const user = await userRepository.findById(sTo);
+        const sender = await userRepository.findById(sUserId);
+
+        logger.debug(
+          {
+            type: socketMsg.SERVER_NEW_MESSAGE,
+            dialogId: dialog._id,
+            senderId: sUserId,
+            receiverId: sTo,
+            text: text,
+            attachments: newMessage.attachments,
+            createdAt: newMessage.createdAt,
+          },
+          "Отправляем сообщение",
+        );
+
+        if (ws.readyState === WebSocket.OPEN) {
+          logger.debug("Подтверждаем отправку сообщения");
+          ws.send(
+            JSON.stringify({
+              type: socketMsg.SERVER_SENT_CONFIRMED,
+              messageId: newMessage._id,
+              tempId: tempId,
+              hh: "1",
+            }),
+          );
+        }
 
         send(sTo, {
-          type: "NEW_MESSAGE",
+          type: socketMsg.SERVER_NEW_MESSAGE,
           dialogId: dialog._id,
           senderId: sUserId,
           receiverId: sTo,
@@ -132,10 +181,10 @@ function createHandlers(clients, onlineUsers, getSingleConversation) {
           createdAt: newMessage.createdAt,
         });
 
-        console.log("СТАРТ ОТПРАВКИ УВЕДОМЛЕНИЯ");
+        logger.debug("Отправляем уведомление");
 
-        const toUsr = await User.findByPk(to);
-        const usr = await User.findByPk(userId);
+        const toUsr = await userRepository.findById(to);
+        const usr = await userRepository.findById(userId);
 
         await sendNotificationToUser(
           sTo,
@@ -143,20 +192,8 @@ function createHandlers(clients, onlineUsers, getSingleConversation) {
           `${usr.username}: ${text}`,
           `/chat/${userId}/${usr.username}`, // ссылка куда перейдет юзер при клике
         );
-
-        if (ws.readyState === WebSocket.OPEN) {
-          console.log("SENT_CONFIRMED");
-          ws.send(
-            JSON.stringify({
-              type: "SENT_CONFIRMED",
-              messageId: newMessage._id,
-              tempId: tempId,
-              hh: "1",
-            }),
-          );
-        }
       } catch (e) {
-        console.error("❌ Ошибка в handleMessage:", e);
+        logger.error(e, "Ошибка обработки сообщения");
       }
     },
   };

@@ -25,7 +25,7 @@ export const ChatFooter = ({
   files,
   onFilesSelected,
   onRemoveFile,
-  isSending, // Используем его здесь
+  isSending,
 }: ChatFooterProps) => {
   return (
     <div className="flex w-full flex-col items-center px-4 pb-4 md:px-0">
@@ -41,7 +41,6 @@ export const ChatFooter = ({
         <SelectedFilesPreview files={files} onRemove={onRemoveFile} />
 
         <div className="flex items-center gap-2 p-2">
-          {/* Блокируем кнопку выбора файлов во время отправки */}
           <AttachMediaButton
             onFilesSelected={onFilesSelected}
             disabled={isSending}
@@ -50,7 +49,7 @@ export const ChatFooter = ({
           <input
             value={inputValue}
             onChange={(e) => handleInputChange(e.target.value)}
-            disabled={isSending} // Блокируем ввод при отправке
+            disabled={isSending}
             placeholder={
               isSending ? "Загрузка медиа..." : "Введите сообщение..."
             }
@@ -63,11 +62,9 @@ export const ChatFooter = ({
             type="button"
             className="flex items-center justify-center rounded-xl bg-gray-50 p-2 transition-colors hover:bg-gray-100 disabled:opacity-50"
             onClick={handleSend}
-            // Кнопка неактивна, если пусто ИЛИ если уже идет отправка
             disabled={isSending || (!inputValue.trim() && files.length === 0)}
           >
             {isSending ? (
-              // Простенький спиннер Tailwind
               <div className="h-5 w-5 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
             ) : (
               <Send size={20} className="text-blue-500" />

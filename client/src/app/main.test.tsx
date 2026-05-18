@@ -1,11 +1,9 @@
 import { vi, describe, it, expect, beforeEach } from "vitest";
 
-// 1. Мокаем зависимости ДО импорта main.tsx
 vi.mock("@/app/providers/ThemeProvider/lib/initTheme", () => ({
   initTheme: vi.fn(),
 }));
 
-// Мокаем react-dom, чтобы не рендерить всё дерево впустую
 vi.mock("react-dom/client", () => ({
   createRoot: vi.fn(() => ({
     render: vi.fn(),
@@ -14,11 +12,9 @@ vi.mock("react-dom/client", () => ({
 
 describe("main.tsx", () => {
   beforeEach(() => {
-    // Очищаем моки перед каждым тестом
     vi.resetModules();
     vi.clearAllMocks();
 
-    // Создаем фиктивный контейнер root, который ищет документ
     document.body.innerHTML = '<div id="root"></div>';
   });
 
@@ -26,7 +22,6 @@ describe("main.tsx", () => {
     const { initTheme } =
       await import("@/app/providers/ThemeProvider/lib/initTheme");
 
-    // Импортируем main, что триггерит его выполнение
     await import("./main");
 
     expect(initTheme).toHaveBeenCalledTimes(1);

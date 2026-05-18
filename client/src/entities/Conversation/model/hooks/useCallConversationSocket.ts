@@ -1,6 +1,5 @@
 import { useUserStore } from "@/entities/User/model/store";
 import { useSocket } from "@/shared/api";
-import logger from "@/utils/logger";
 import { useEffect, useState, useCallback, useRef } from "react";
 
 export const useCallConversationSocket = (targetId: string | undefined) => {
@@ -16,21 +15,15 @@ export const useCallConversationSocket = (targetId: string | undefined) => {
   const [incomingCall, setIncomingCall] = useState<{
     from: string;
     offer: any;
-  } | null>(null); // Когда звонят нам
+  } | null>(null);
 
   const processIceQueue = useCallback(async () => {
-    console.log(
-      "🔄 Обработка накопленной очереди ICE-кандидатов:",
-      iceCandidatesQueue.current.length,
-    );
     while (iceCandidatesQueue.current.length > 0) {
       const candidate = iceCandidatesQueue.current.shift();
       if (candidate && pc.current) {
         try {
           await pc.current.addIceCandidate(new RTCIceCandidate(candidate));
-        } catch (e) {
-          console.error("❌ Ошибка при добавлении кандидата из очереди:", e);
-        }
+        } catch (e) {}
       }
     }
   }, []);
@@ -55,17 +48,6 @@ export const useCallConversationSocket = (targetId: string | undefined) => {
 
       peer.ontrack = (event) => {
         const stream = event.streams[0];
-        console.log("📍 ПОЛУЧЕН ПОТОК ОТ СОБЕСЕДНИКА:", stream.id);
-        console.log("🔊 Аудио-треков найдено:", stream.getAudioTracks().length);
-
-        if (stream.getAudioTracks().length > 0) {
-          const audioTrack = stream.getAudioTracks()[0];
-          console.log("📊 Статус звука:", {
-            enabled: audioTrack.enabled, // Должно быть true
-            readyState: audioTrack.readyState, // Должно быть 'live'
-          });
-        }
-
         setRemoteStream(stream);
       };
 
@@ -81,14 +63,10 @@ export const useCallConversationSocket = (targetId: string | undefined) => {
         const data = JSON.parse(event.data);
 
         if (data.type === "offer") {
-          console.log("Входящий звонок от:", data.from);
-          // Вместо авто-ответа просто открываем модалку
           setIncomingCall({ from: data.from, offer: data.payload });
         }
 
         if (data.type === "hangup") {
-          console.log("Собеседник повесил трубку");
-          // Вызываем твою функцию очистки, которая останавливает стримы и закрывает Peer
           stopAllTracks();
         }
 
@@ -97,34 +75,22 @@ export const useCallConversationSocket = (targetId: string | undefined) => {
             await pc.current.setRemoteDescription(
               new RTCSessionDescription(data.payload),
             );
-
-            // КРИТИЧЕСКИЙ МОМЕНТ: То же самое для вызывающей стороны
             await processIceQueue();
           }
         }
 
         if (data.type === "ice-candidate") {
-          // Если удаленное описание уже установлено — добавляем сразу
           if (pc.current?.remoteDescription) {
             try {
               await pc.current.addIceCandidate(
                 new RTCIceCandidate(data.payload),
               );
-            } catch (e) {
-              console.error("Ошибка добавления прямого ICE кандидата:", e);
-            }
+            } catch (e) {}
           } else {
-            // Иначе — сохраняем в очередь до востребования
-            console.log(
-              "⏳ Кандидат получен раньше RemoteDescription, сохраняем в очередь",
-            );
             iceCandidatesQueue.current.push(data.payload);
           }
         }
-      } catch (e) {
-        console.error("ПОЛНАЯ ОШИБКА", e);
-        logger.error(e, "Error parsing socket message");
-      }
+      } catch (e) {}
     });
 
     return () => {
@@ -141,7 +107,6 @@ export const useCallConversationSocket = (targetId: string | undefined) => {
     const peer = setupPeer(from);
 
     try {
-      // 1. Запрашиваем доступ к камере/микрофону
       const stream = await navigator.mediaDevices.getUserMedia({
         video: true,
         audio: true,
@@ -149,13 +114,10 @@ export const useCallConversationSocket = (targetId: string | undefined) => {
       setLocalStream(stream);
       stream.getTracks().forEach((track) => peer.addTrack(track, stream));
 
-      // 2. Устанавливаем удаленное описание
       await peer.setRemoteDescription(new RTCSessionDescription(offer));
 
-      // 3. Прорабатываем очередь ICE-кандидатов (из предыдущего шага)
       await processIceQueue();
 
-      // 4. Создаем и отправляем ответ
       const answer = await peer.createAnswer();
       await peer.setLocalDescription(answer);
 
@@ -169,17 +131,12 @@ export const useCallConversationSocket = (targetId: string | undefined) => {
         );
       }
 
-      // Очищаем состояние входящего звонка
       setIncomingCall(null);
-    } catch (e) {
-      console.error("Ошибка при принятии вызова:", e);
-    }
+    } catch (e) {}
   };
 
   const hangUp = () => {
-    // Отправляем сигнал другому
     socket?.send(JSON.stringify({ type: "hangup", to: targetId }));
-    // Чистим у себя
     stopAllTracks();
   };
 
@@ -197,7 +154,6 @@ export const useCallConversationSocket = (targetId: string | undefined) => {
   };
 
   const startCall = async () => {
-    console.log("ЗАЯВОЧКА НА ЗВОНОК");
     if (!targetId) return;
     const peer = setupPeer(targetId);
     const stream = await navigator.mediaDevices.getUserMedia({
@@ -209,7 +165,6 @@ export const useCallConversationSocket = (targetId: string | undefined) => {
 
     const offer = await peer.createOffer();
     await peer.setLocalDescription(offer);
-    console.log("ЗАЯВОЧКА НА ЗВОНОК ОТПРАВЛЯЕТСЯ");
     socket?.send(
       JSON.stringify({ type: "offer", to: targetId, payload: offer }),
     );
@@ -219,7 +174,6 @@ export const useCallConversationSocket = (targetId: string | undefined) => {
     if (localStream) {
       localStream.getTracks().forEach((track) => {
         track.stop();
-        console.log(`Track ${track.kind} stopped`);
       });
     }
 

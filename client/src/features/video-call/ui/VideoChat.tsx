@@ -24,10 +24,6 @@ export const VideoChat = ({
   return (
     <div>
       <button onClick={() => startCall(targetUserId)}>Позвонить</button>
-      <div className="videos">
-        {/* localStream привязываем к <video srcObject={localStream} autoPlay /> */}
-        {/* remoteStream привязываем к другому <video /> */}
-      </div>
     </div>
   );
 };

@@ -1,0 +1,16 @@
+module.exports = {
+  USER_EMAIL_EXISTS: "Пользователь с таким Email уже существует",
+  USER_NAME_EXISTS: "Пользователь с таким username уже существует",
+  USER_NOT_EXISTS: "Пользователь не существует",
+  PASSWORD_EQUILS: "Пароли не совпадают",
+  AUTH_FAILED: "Неверный логин или пароль",
+  NOT_AUTHORIZED: "Пользователь не авторизован",
+  SERVER_ERROR: "Произошла системная ошибка",
+  TOKEN_NOT_COOKIES: "Токен отсутствует в куках",
+  USER_NOT_ACCESS: "У вас нет прав доступа",
+  TOKEN_NOT_VALIDATE: "Токен недействителен или просрочен",
+  SESSION_NOT_VALIDATED: "Сессия не найдена или просрочена",
+  DIALOG_NOT_EXIST: "Диалога нет",
+  NOT_VALIDE_DATA: "Ошибка в данных",
+  FILES_NOT_CHANGES: "Файлы не выбраны",
+};

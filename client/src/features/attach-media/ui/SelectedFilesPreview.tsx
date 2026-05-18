@@ -1,4 +1,3 @@
-// features/attach-media/ui/SelectedFilesPreview.tsx
 import { X } from "lucide-react";
 
 interface SelectedFilesPreviewProps {
@@ -15,7 +14,6 @@ export const SelectedFilesPreview = ({
   return (
     <div className="flex flex-wrap gap-2 border-t border-slate-200 bg-slate-50 p-2">
       {files.map((file, index) => {
-        // Создаем временную ссылку для отображения
         const previewUrl = URL.createObjectURL(file);
 
         return (

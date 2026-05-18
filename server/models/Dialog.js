@@ -27,7 +27,5 @@ const dialogSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-dialogSchema.index({ participants: 1 });
-
 const Dialog = mongoose.model("Dialog", dialogSchema);
 module.exports = { Dialog };

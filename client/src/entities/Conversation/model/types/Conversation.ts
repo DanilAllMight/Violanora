@@ -17,16 +17,16 @@ export interface LastMessage {
 }
 
 export interface Conversation {
-  _id: string; // ID диалога из MongoDB
-  matchKey: string; // Твой ключ "1_2"
-  participants: Participant[]; // Массив из двух объектов пользователей
+  id: string;
+  matchKey: string;
+  participants: Participant[];
   lastMessage: LastMessage;
-  unreadCount: Record<string, number>; // { "1": 5, "2": 0 }
+  unreadCount: Record<string, number>;
   updatedAt: string;
 }
 
 export interface ConversationResponse {
-  _id: string;
+  id: string;
   matchKey: string;
   participants: Participant[];
   lastMessage?: LastMessage;
@@ -34,5 +34,3 @@ export interface ConversationResponse {
   updatedAt: string;
   createdAt: string;
 }
-
-//createdAt: string;

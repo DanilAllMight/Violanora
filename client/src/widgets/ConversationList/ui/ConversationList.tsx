@@ -17,12 +17,9 @@ export const ConversationList = () => {
     (state) => state.conversations,
   );
 
-  console.log("Диалоги. ", conversations);
-
   useEffect(() => {
     if (userId) {
       getConversations(userId);
-      console.log("hi ", conversations);
     }
   }, [getConversations, userId]);
 
@@ -95,10 +92,7 @@ export const ConversationList = () => {
 
       <ul className="flex flex-col gap-2">
         {conversations.map((conversation) => (
-          <ConversationCard
-            key={conversation._id}
-            conversation={conversation}
-          />
+          <ConversationCard key={conversation.id} conversation={conversation} />
         ))}
       </ul>
     </section>
