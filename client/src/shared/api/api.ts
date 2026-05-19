@@ -59,7 +59,6 @@ $api.interceptors.response.use(
           })
           .catch((err) => Promise.reject(err));
       }
-
       originalRequest._isRetry = true;
       isRefreshing = true;
       try {
@@ -71,9 +70,9 @@ $api.interceptors.response.use(
           },
         );
 
-        const newToken = response.data.user.access_token;
+        const newToken = response.data.access_token;
         localStorage.setItem("access_token", newToken);
-        useUserStore.getState().setAuthData(response.data.user);
+        useUserStore.getState().setAuthData(response.data);
 
         processQueue(null, newToken);
 
