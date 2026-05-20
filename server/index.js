@@ -25,7 +25,23 @@ initDB();
 connectDB();
 
 app.use(cookieParser());
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        imgSrc: [
+          "'self'",
+          "data:",
+          "https://violanora.ru",
+          "http://localhost:5173",
+          "http://192.168.0.101:5173",
+        ],
+      },
+    },
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  }),
+);
 app.use(
   cors({
     origin: [
