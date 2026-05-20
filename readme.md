@@ -238,5 +238,5 @@ graph TD
 
 Если вам понравился проект или вы хотите обсудить мои инженерные решения подробнее, я открыт к диалогу и предложениям о работе:
 
-[![Telegram](https://shields.io💬-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/ALL_MIGHT_DANIL)
-[![Email](https://shields.io✉️-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:lopatin1945@bk.ru)
+[Telegram](https://t.me/ALL_MIGHT_DANIL)
+[Email](mailto:lopatin1945@bk.ru)
