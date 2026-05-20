@@ -1,5 +1,4 @@
-# Violanora
-https://violanora.ru/
+# Violanora https://violanora.ru/
 
 Открытая социальная платформа с real-time коммуникацией, находящаяся в активной разработке. Проект создан для двух основных целей:
 
@@ -14,23 +13,24 @@ https://violanora.ru/
 
 ### Клиент (Frontend)
 
-- **Среда и сборка**: React, TypeScript, Vite
-- **Стили и компоненты**: TailwindCSS, RadixUI (доступные UI-примитивы), Sonner (уведомления)
-- **Данные и валидация**: Axios, Zod (строгая проверка входящих данных)
+- **Среда и сборка**: React 19.2.0, TypeScript, Vite 7.3.1
+- **Стили и компоненты**: TailwindCSS 4.2.1, RadixUI (доступные UI-примитивы), Sonner 2.0.7 (уведомления)
+- **Данные и валидация**: Axios 1.13.6, Zod 4.3.6 (строгая проверка входящих данных)
 - **Архитектурный паттерн**: Feature-Sliced Design (FSD)
 - **Качество кода**: ESLint, Prettier
-- **Управление состоянием**: Zustand
+- **Управление состоянием**: Zustand 5.0.11
 - **Хранение данных**: LocalStorage
 
 ### Сервер (Backend & DB)
 
-- **Платформа**: Node.js, Express (CommonJS)
-- **Связь**: HTTP, WebSocket(двусторонний real-time обмен), WebPush API (фоновые уведомления)
+- **Платформа**: Node.js >=16.0.0, Express 5.2.1 (CommonJS)
+- **Связь**: HTTP, WebSocket 8.19.0(двусторонний real-time обмен), WebPush API 3.6.7 (фоновые уведомления)
 - **Хранение данных**:
   - **PostgreSQL** - для реляционных связей (пользователи, сессии)
   - **MongoDB** - для хранения сообщений и диалогов
 - **Архитектурный паттерн**: MVC (Controller -> Service -> Repository)
-- **Логирование**: Pino
+- **ORM**: Sequelize 6.37.8 (для postgres), mongoose 9.3.0 (для mongo)
+- **Логирование**: Pino 10.3.1
 
 ### DevOps & Инфраструктура
 
@@ -224,8 +224,5 @@ graph TD
 
 Если вам понравился проект или вы хотите обсудить мои инженерные решения подробнее, я открыт к диалогу и предложениям о работе:
 
-[![Telegram](https://shields.io💬-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me)
-[![Email](https://shields.io✉️-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:your.email@gmail.com)
-[![LinkedIn](https://shields.io💼-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com)
-
-_Примечание: Обязательно замените ссылки в скобках `(...)` на ваши реальные контакты._
+[![Telegram](https://shields.io💬-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/ALL_MIGHT_DANIL)
+[![Email](https://shields.io✉️-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:lopatin1945@bk.ru)
