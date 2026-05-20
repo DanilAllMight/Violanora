@@ -238,5 +238,7 @@ graph TD
 
 Если вам понравился проект или вы хотите обсудить мои инженерные решения подробнее, я открыт к диалогу и предложениям о работе:
 
-[Telegram](https://t.me/ALL_MIGHT_DANIL)
-[Email](mailto:lopatin1945@bk.ru)
+| Способ связи | Ссылка / Адрес |
+| :--- | :--- |
+| **Telegram** | [@ALL_MIGHT_DANIL](https://t.me) |
+| **Email** | `lopatin1945@bk.ru` |
