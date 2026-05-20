@@ -88,9 +88,9 @@ $api.interceptors.response.use(
     if (!error.response) {
       const networkError = "Сервер недоступен. Работы уже ведутся!";
 
-      if (error.message != "Диалога нет") {
-        toast.error(networkError);
-      }
+      console.log("error", error);
+
+      toast.error(networkError);
 
       return Promise.reject(error);
     }
@@ -106,7 +106,10 @@ $api.interceptors.response.use(
       500: data?.message || "Ошибка сервера",
     };
 
-    toast.error(messages[status] || "Что-то пошло не так");
+    if (error.response.data.message != "Диалога нет") {
+      toast.error(messages[status] || "Что-то пошло не так");
+    }
+
     return Promise.reject(error);
   },
 );
