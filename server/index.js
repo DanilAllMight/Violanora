@@ -36,6 +36,8 @@ app.use(
           "https://violanora.ru",
           "http://localhost:5173",
           "http://192.168.0.101:5173",
+          "https://*.timeweb.cloud",
+          "https://timeweb.cloud",
         ],
       },
     },
