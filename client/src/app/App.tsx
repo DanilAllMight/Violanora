@@ -2,7 +2,7 @@ import { AppRouter } from "@/app/providers/router/ui/AppRouter";
 import { useOnlineListener } from "@/entities/User/api/useOnlineListener";
 import { useUserStore } from "@/entities/User/model/store/useUserStore";
 import { usePushSubscription } from "@/features/subscribe-to-notifications";
-import { PushBanner } from "@/features/subscribe-to-notifications/ui/PushBanner";
+//import { PushBanner } from "@/features/subscribe-to-notifications/ui/PushBanner";
 import { $api } from "@/shared/api";
 import { PageLoader } from "@/shared/ui";
 import { NavBar } from "@/widgets/NavBar";
