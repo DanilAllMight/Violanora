@@ -132,7 +132,7 @@ class UserService {
 
   async updateUserData(userId, data) {
     logger.debug("Обновление данных пользователя");
-    const user = await userRepository.update(id, { username });
+    const user = await userRepository.update(userId, { username });
 
     if (user) {
       const usr = { username: data.username };
