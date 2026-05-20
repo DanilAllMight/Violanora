@@ -37,6 +37,11 @@ services:
       - mongodata:/data/db
     networks:
       - chat-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   server:
     build: ./server
@@ -57,6 +62,11 @@ services:
       - mongodb
     networks:
       - chat-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   client:
     build: ./client
