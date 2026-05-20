@@ -1,4 +1,3 @@
-import { type ProfileResponse } from "../model/types";
 import { useUserStore } from "@/entities/User/model/store";
 import type { UserData } from "@/entities/User/model/types/user";
 import { $api } from "@/shared/api";
@@ -10,9 +9,9 @@ interface UpdateProfileDataProps {
 
 export const updateProfileData = async (data: UpdateProfileDataProps) => {
   try {
-    const response = await $api.post<ProfileResponse>("/api/user/update", data);
+    const response = await $api.post<UserData>("/api/user/update", data);
     if (response && response.data) {
-      useUserStore.getState().setUserData(response.data.user);
+      useUserStore.getState().setUserData(response.data);
       return response.data;
     }
   } catch (error) {
