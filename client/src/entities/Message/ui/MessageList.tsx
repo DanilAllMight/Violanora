@@ -33,7 +33,7 @@ export const MessageList = ({ messages }: MessagesList) => {
       {Object.keys(groupedMessages).map((date) => (
         <div key={date} className="relative mb-6 flex flex-col gap-4">
           <div className="pointer-events-none sticky top-0 z-50 flex justify-center py-2">
-            <span className="pointer-events-auto rounded-full border border-gray-100 bg-white/90 px-4 py-1.5 text-[11px] font-bold text-gray-500 uppercase shadow-sm backdrop-blur-md">
+            <span className="text-app-text bg-app-bg pointer-events-auto rounded-full border border-gray-100 px-4 py-1.5 text-[11px] font-bold uppercase shadow-sm backdrop-blur-md">
               {date}
             </span>
           </div>

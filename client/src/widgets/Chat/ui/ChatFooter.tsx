@@ -37,10 +37,10 @@ export const ChatFooter = ({
         )}
       </div>
 
-      <div className="mt-2 flex w-full max-w-[400px] flex-col overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+      <div className="bg-app-bg text-app-text mt-2 flex w-full max-w-[400px] flex-col overflow-hidden rounded-xl border border-gray-100 shadow-sm">
         <SelectedFilesPreview files={files} onRemove={onRemoveFile} />
 
-        <div className="flex items-center gap-2 p-2">
+        <div className="text-app-text flex items-center gap-2 p-2">
           <AttachMediaButton
             onFilesSelected={onFilesSelected}
             disabled={isSending}

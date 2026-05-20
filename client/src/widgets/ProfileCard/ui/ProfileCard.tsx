@@ -59,7 +59,7 @@ export const ProfileCard = () => {
               </span>
             </div>
           )}
-          <div className="self-start">
+          <div className="text-app-text self-start">
             <button
               aria-label="Изменить данные"
               type="button"

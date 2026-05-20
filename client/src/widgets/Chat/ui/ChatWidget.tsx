@@ -160,7 +160,7 @@ export const ChatWidget = ({ userId: targetId }: ChatWidgetProps) => {
   };
 
   return (
-    <div className="absolute inset-0 flex h-full flex-col bg-white">
+    <div className="bg-app-bg absolute inset-0 flex h-full flex-col">
       <ChatHeader
         username={username}
         partner_avatar={partner_avatar}
