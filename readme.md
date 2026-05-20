@@ -36,7 +36,7 @@
 
 - **Контейнеризация**: Docker, Docker Compose
 - **Прокси-сервер**: Nginx (маршрутизация, SSL)
-- **Хостинг**: Timeweb Cloud (VPS) + CDN
+- **Хостинг**: Timeweb Cloud (VPS) + CDN + S3 хранилище + Домен
 
 ---
 
