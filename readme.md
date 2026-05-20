@@ -205,14 +205,28 @@ graph TD
 1. **Клонирование проекта**:
 
    ```bash
-   git clone https://github.com
+   git clone [https://github.com](https://github.com/DanilAllMight/Violanora.git)
    cd Violanora
    ```
 
 2. **Настройка переменных**:
-   Создайте файлы конфигурации `.env` в папках `./frontend` и `./backend` на основе шаблонов `.env.example`.
+   Создайте файлы конфигурации `.env` в папках `./client` и `./server` на основе шаблонов `.env.example`.
 
-3. **Сборка и запуск контейнеров**:
+3. **Локальный запуск проекта**:
+
+   * **Терминал 1** (Запуск сервера):
+     ```bash
+     cd ./server
+     node index.js
+     ```
+
+   * **Терминал 2** (Запуск клиента):
+     ```bash
+     cd ./client
+     npm run dev
+     ```
+     
+4. **Сборка и запуск контейнеров**:
    ```bash
    docker-compose up --build -d
    ```
