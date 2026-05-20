@@ -86,10 +86,11 @@ function App() {
       <NavBar />
       <main className="flex h-full w-full flex-grow flex-col overflow-auto">
         <AppRouter />
-        <PushBanner isAuth={isAuth} />
       </main>
     </div>
   );
 }
 
 export default App;
+
+/*<PushBanner isAuth={isAuth} />*/

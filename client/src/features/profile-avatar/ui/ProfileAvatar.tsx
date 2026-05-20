@@ -12,8 +12,6 @@ export const ProfileAvatar = ({ src, onFileSelect, onView }: Props) => {
 
   const avatarUrl = src || DEFAULT_AVATAR;
 
-  console.log("AVATAR ", avatarUrl);
-
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) onFileSelect(file);
@@ -25,7 +23,6 @@ export const ProfileAvatar = ({ src, onFileSelect, onView }: Props) => {
         {src && <source srcSet={src} type="image/webp" />}
         <img
           src={avatarUrl}
-          crossOrigin="anonymous"
           alt="Avatar"
           className="h-full w-full object-cover"
         />
