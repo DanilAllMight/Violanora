@@ -74,7 +74,21 @@ class MessageService {
     return Promise.all(uploadPromises);
   }
 
-  async deleteMessage() {}
+  async deleteMessage() {
+    logger.debug("Начало удаления сообщения");
+  }
+
+  async editMessage() {
+    logger.debug("Начало редактирования сообщения");
+  }
+
+  async replyMessage() {
+    logger.debug("Начало пересылания сообщения");
+  }
+
+  async forwardMessage() {
+    logger.debug("Начало ответа на сообщение");
+  }
 }
 
 module.exports = new MessageService();

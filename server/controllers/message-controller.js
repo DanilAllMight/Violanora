@@ -53,6 +53,22 @@ class MessageController {
 
     return res.json({ urls: uploadedUrls });
   }
+
+  async deleteMessage(req, res, next) {
+    logger.info("Пользователь удаляет сообщение");
+  }
+
+  async forwardMessage(req, res, next) {
+    logger.info("Пользователь отвечает на сообщение");
+  }
+
+  async replyMessage(req, res, next) {
+    logger.info("Пользователь пересылает сообщение");
+  }
+
+  async editMessage(req, res, next) {
+    logger.info("Пользователь редактирует сообщение");
+  }
 }
 
 module.exports = new MessageController();

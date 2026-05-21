@@ -19,6 +19,15 @@ router.get(
 );
 
 router.post(
+  "/upload-chat-media",
+  authMiddleware,
+  upload.array("chatFiles", 10),
+  catchAsync((req, res, next) =>
+    messageController.uploadChatMedia(req, res, next),
+  ),
+);
+
+router.post(
   "/delete",
   authMiddleware,
   catchAsync((req, res, next) =>
@@ -27,11 +36,24 @@ router.post(
 );
 
 router.post(
-  "/upload-chat-media",
+  "/edit",
   authMiddleware,
-  upload.array("chatFiles", 10),
+  catchAsync((req, res, next) => messageController.editMessage(req, res, next)),
+);
+
+router.post(
+  "/reply",
+  authMiddleware,
   catchAsync((req, res, next) =>
-    messageController.uploadChatMedia(req, res, next),
+    messageController.replyMessage(req, res, next),
+  ),
+);
+
+router.post(
+  "/forward",
+  authMiddleware,
+  catchAsync((req, res, next) =>
+    messageController.forwardMessage(req, res, next),
   ),
 );
 
