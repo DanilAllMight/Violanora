@@ -2,6 +2,7 @@ import { ChatFooter } from "./ChatFooter";
 import { ChatHeader } from "./ChatHeader";
 import { useCallConversationSocket } from "@/entities/Conversation/model/hooks";
 import { useConversationSocket } from "@/entities/Conversation/model/hooks/useConversationSocket";
+import { useConversationUnreadStore } from "@/entities/Conversation/model/store";
 import { useConversationStore } from "@/entities/Conversation/model/store/useConversationStore";
 import { MessageList } from "@/entities/Message/ui";
 import { useUserStore } from "@/entities/User/model/store/useUserStore";
@@ -52,10 +53,20 @@ export const ChatWidget = ({ userId: targetId }: ChatWidgetProps) => {
   const typingUsers = useConversationStore((state) => state.typingUsers);
   const isTyping = typingUsers.has(String(targetId));
 
+  const activeDialogId = useConversationStore((state) => state.activeDialogId);
+
+  const removeUnread =
+    useConversationUnreadStore.getState().removeUnreadConversation;
+
   useEffect(() => {
     if (myId && targetId) {
       useConversationStore.getState().getConversation(myId, Number(targetId));
     }
+
+    if (activeDialogId) {
+      removeUnread(activeDialogId);
+    }
+
     return () => {
       resetActiveDialog();
       isFirstLoad.current = true;

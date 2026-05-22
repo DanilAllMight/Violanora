@@ -125,6 +125,20 @@ class ConversationService {
 
     return enrichedDialog;
   }
+
+  async getUnreadConversations(userId) {
+    logger.debug(userId, "Начало получения списка непрочитанных диалогов");
+
+    const sUserId = String(userId);
+
+    const dialogs = await dialogRepository.findUnreadConversations(userId);
+
+    const unreadDialogIds = dialogs.map((d) => d._id.toString());
+
+    logger.debug(unreadDialogIds, "Получен список диалогов");
+
+    return unreadDialogIds;
+  }
 }
 
 module.exports = new ConversationService();

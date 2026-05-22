@@ -38,6 +38,19 @@ class ConversationController {
 
     return res.json(response);
   }
+
+  async getUnreadConversations(req, res, next) {
+    const userId = req.user.id;
+
+    logger.info(
+      userId,
+      "Пользователь запросил информацию о непрочитанных диалогах",
+    );
+
+    const count = await conversationService.getUnreadConversations(userId);
+
+    return res.json(count);
+  }
 }
 
 module.exports = new ConversationController();

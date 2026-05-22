@@ -1,4 +1,5 @@
 import { useOnlineStore } from "../model/store/useOnlineStore";
+import { useConversationUnreadStore } from "@/entities/Conversation/model/store";
 import { useConversationListStore } from "@/entities/Conversation/model/store/useConversationListStore";
 import { useConversationStore } from "@/entities/Conversation/model/store/useConversationStore";
 import { useSocket } from "@/shared/api";
@@ -7,6 +8,10 @@ import { useEffect } from "react";
 export const useOnlineListener = (userId: number | undefined) => {
   const { socket, subscribe } = useSocket(userId);
   const { setOnline, setOffline, setAllOnline } = useOnlineStore();
+
+  const addUnread = useConversationUnreadStore.getState().addUnreadConversation;
+  const removeUnread =
+    useConversationUnreadStore.getState().removeUnreadConversation;
 
   useEffect(() => {
     if (!userId) return;
@@ -34,6 +39,10 @@ export const useOnlineListener = (userId: number | undefined) => {
             listStore.updateConversation(msgDialogId, {
               lastMessage: { status: "read" },
             });
+          }
+
+          if (data.userId === userId) {
+            removeUnread(msgDialogId);
           }
         }
 
@@ -63,13 +72,22 @@ export const useOnlineListener = (userId: number | undefined) => {
               JSON.stringify({ type: "MARK_AS_READ", dialogId: msgDialogId }),
             );
           }
+
+          if (data.senderId !== userId) {
+            addUnread(msgDialogId);
+          }
         }
 
         if (data.type === "MESSAGES_READ") {
           const listStore = useConversationListStore.getState();
+          const msgDialogId = String(data.dialogId);
           listStore.updateConversation(data.dialogId, {
             lastMessage: { status: "read" },
           });
+
+          if (data.userId === userId) {
+            removeUnread(msgDialogId);
+          }
         }
 
         if (data.type === "TYPING_START") {

@@ -1,8 +1,10 @@
+import { useConversationUnreadStore } from "@/entities/Conversation/model/store";
 import { useThemeStore } from "@/entities/Theme/model/store/useThemeStore";
 import { useUserStore } from "@/entities/User/model/store/useUserStore";
 import { logout } from "@/features/logout";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { Menu, LogOut, Sun, Moon, Palette, ChevronRight } from "lucide-react";
+import { useEffect } from "react";
 import { NavLink } from "react-router-dom";
 
 export const OptionBar = () => {
@@ -12,6 +14,13 @@ export const OptionBar = () => {
 
   const userRole = useUserStore((state) => state.authData?.role) || "USER";
   const isAdmin = userRole == "ADMIN";
+
+  const unreadCount = useConversationUnreadStore((state) => state.unreadCount);
+  const { fetchUnreadCount } = useConversationUnreadStore();
+
+  useEffect(() => {
+    fetchUnreadCount();
+  }, [unreadCount]);
 
   const logout_ = () => {
     logout();
@@ -28,15 +37,23 @@ export const OptionBar = () => {
   return (
     <nav>
       <DropdownMenu.Root>
-        <DropdownMenu.Trigger asChild>
-          <button
-            type="button"
-            aria-label="Меню цветов"
-            className="bg-app-card border-app-icon rounded-xl border p-2 outline-none"
-          >
-            <Menu size={24} className="text-app-text" />
-          </button>
-        </DropdownMenu.Trigger>
+        <div className="relative inline-block">
+          <DropdownMenu.Trigger asChild>
+            <button
+              type="button"
+              aria-label="Меню цветов"
+              className="bg-app-card border-app-icon rounded-xl border p-2 outline-none"
+            >
+              <Menu size={24} className="text-app-text" />
+            </button>
+          </DropdownMenu.Trigger>
+
+          {unreadCount > 0 && (
+            <span className="absolute -top-2 -right-2 z-10 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1 text-[11px] font-bold text-white shadow-sm">
+              {unreadCount}
+            </span>
+          )}
+        </div>
 
         <DropdownMenu.Portal>
           <DropdownMenu.Content className="bg-app-card border-app-icon z-50 min-w-[200px] rounded-2xl border p-2 shadow-xl">
@@ -105,12 +122,15 @@ export const OptionBar = () => {
               </NavLink>
             </DropdownMenu.Item>
 
-            <DropdownMenu.Item className="hover:bg-app-nav text-app-text flex items-center rounded-xl">
+            <DropdownMenu.Item className="hover:bg-app-nav text-app-text flex w-full items-center rounded-xl">
               <NavLink
                 to={"/message"}
-                className="text-app-text flex w-full items-center p-3"
+                className="text-app-text flex w-full items-center justify-between p-3"
               >
-                Сообщения
+                <span>Сообщения</span>
+                <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1 text-[11px] font-bold text-white shadow-sm">
+                  {unreadCount}
+                </span>
               </NavLink>
             </DropdownMenu.Item>
 

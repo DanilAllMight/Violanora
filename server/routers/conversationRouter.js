@@ -20,4 +20,12 @@ router.get(
   ),
 );
 
+router.get(
+  "/unreadConversations",
+  authMiddleware,
+  catchAsync((req, res, next) =>
+    conversationConroller.getUnreadConversations(req, res, next),
+  ),
+);
+
 module.exports = router;

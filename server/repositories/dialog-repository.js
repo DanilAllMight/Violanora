@@ -46,6 +46,20 @@ class DialogRepository extends MongoBaseRepository {
       participants: { $in: [userId] },
     });
   }
+
+  async findUnreadConversations(currentUserId) {
+    const unreadFieldPath = `unreadCount.${currentUserId}`;
+
+    const dialogs = await this.find(
+      {
+        participants: currentUserId,
+        [unreadFieldPath]: { $gt: 0 },
+      },
+      { "lastMessage.createdAt": -1 },
+    );
+
+    return dialogs;
+  }
 }
 
 module.exports = new DialogRepository();
