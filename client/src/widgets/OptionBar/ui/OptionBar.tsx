@@ -128,9 +128,11 @@ export const OptionBar = () => {
                 className="text-app-text flex w-full items-center justify-between p-3"
               >
                 <span>Сообщения</span>
-                <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1 text-[11px] font-bold text-white shadow-sm">
-                  {unreadCount}
-                </span>
+                {unreadCount > 0 && (
+                  <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1 text-[11px] font-bold text-white shadow-sm">
+                    {unreadCount}
+                  </span>
+                )}
               </NavLink>
             </DropdownMenu.Item>
 
