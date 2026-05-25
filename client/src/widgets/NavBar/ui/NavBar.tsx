@@ -20,7 +20,10 @@ export const NavBar = () => {
             <AuthButtons />
           ) : (
             <div className="flex items-center gap-5">
-              <NavLink className="flex items-center" to={"/profile"}>
+              <NavLink
+                className="flex items-center"
+                to={`/profile/${authData?.id}`}
+              >
                 <div className="flex h-14 w-14 items-center pr-2">
                   <UserAvatar avatar_url={authData.avatar_url} />
                 </div>

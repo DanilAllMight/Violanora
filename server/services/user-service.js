@@ -171,6 +171,20 @@ class UserService {
 
     return user;
   }
+
+  async getUserData(userId) {
+    logger.debug("Получение данных пользователя");
+
+    const user = await userRepository.findById(userId);
+
+    if (!user) {
+      throw new AppError(errorMessages.USER_NOT_EXISTS, 404);
+    }
+
+    logger.debug(user, "Данные пользователя получены");
+
+    return user;
+  }
 }
 
 module.exports = new UserService();

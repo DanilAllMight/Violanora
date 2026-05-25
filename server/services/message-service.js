@@ -9,6 +9,7 @@ const path = require("path");
 const { s3Client } = require("../utils/s3");
 require("dotenv").config();
 const { PutObjectCommand } = require("@aws-sdk/client-s3");
+const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
 
 class MessageService {
   async getMessages(senderId, receiverId, before, limit) {
@@ -78,8 +79,85 @@ class MessageService {
     logger.debug("Начало удаления сообщения");
   }
 
-  async editMessage() {
+  async editMessage(data, userId) {
     logger.debug("Начало редактирования сообщения");
+
+    const messageId = data.messageId;
+    const editingText = data.editingText;
+    const editingAttachments = data.editingAttachments;
+    const attachmentsUrls = data.attachmentsUrls;
+    const createdAt = data.createdAt;
+    const targetId = data.targetId;
+
+    const updatedMessage = await messageRepository.updateMessageContent({
+      messageId,
+      editingText,
+      editingAttachments,
+      attachmentsUrls,
+    });
+
+    const dialog = await this.updateLastMessage(
+      editingText,
+      editingAttachments,
+      attachmentsUrls,
+      createdAt,
+      targetId,
+      userId,
+    );
+
+    const updatedMessageWithDialog = updatedMessage.toObject();
+
+    updatedMessageWithDialog.dialogId = dialog.id;
+
+    logger.debug(
+      { updatedMessage: updatedMessageWithDialog },
+      "Сообщения обновлены",
+    );
+
+    console.log("VALUE ", updatedMessageWithDialog);
+
+    /*if (updatedMessageWithDialog.text == "") {
+      updatedMessageWithDialog.text = "📷 Фотография";
+    }*/
+
+    return updatedMessageWithDialog;
+  }
+
+  async updateLastMessage(
+    editingText,
+    editingAttachments,
+    attachmentsUrls,
+    createdAt,
+    targetId,
+    userId,
+  ) {
+    const dialog = await dialogRepository.findByParticipants(userId, targetId);
+
+    const matchKey = [userId, targetId].sort().join("_");
+
+    const lastMessageText =
+      editingText ||
+      (editingAttachments?.length > 0 || attachmentsUrls?.length > 0
+        ? "📷 Фотография"
+        : "");
+
+    console.log(
+      "BOOL ",
+      editingAttachments?.length > 0 || attachmentsUrls?.length > 0,
+      " ",
+      lastMessageText,
+    );
+
+    const dialogUpdate = {
+      $set: {
+        "lastMessage.text": lastMessageText,
+        "lastMessage.senderId": userId,
+        "lastMessage.status": "read",
+      },
+    };
+
+    const res = await dialogRepository.updateDialog(matchKey, dialogUpdate);
+    return res;
   }
 
   async replyMessage() {
@@ -88,6 +166,31 @@ class MessageService {
 
   async forwardMessage() {
     logger.debug("Начало ответа на сообщение");
+  }
+
+  async deleteChatMedia(urls) {
+    if (!urls || urls.length === 0) return;
+
+    const deletePromises = urls.map(async (url) => {
+      try {
+        const cdnUrlWithSlash = process.env.CDN_URL.endsWith("/")
+          ? process.env.CDN_URL
+          : `${process.env.CDN_URL}/`;
+        const fileKey = url.replace(cdnUrlWithSlash, "");
+
+        const params = {
+          Bucket: process.env.S3_BUCKET_NAME,
+          Key: fileKey,
+        };
+
+        await s3Client.send(new DeleteObjectCommand(params));
+        logger.debug(`Файл успешно удален из S3: ${fileKey}`);
+      } catch (error) {
+        logger.error(`Не удалось удалить файл из S3 (${url}):`, error);
+      }
+    });
+
+    await Promise.all(deletePromises);
   }
 }
 

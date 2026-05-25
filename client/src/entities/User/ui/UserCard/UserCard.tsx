@@ -12,7 +12,8 @@ export const UserCard = ({ user }: UserCardProps) => {
   const myId = useUserStore.getState().authData?.id;
   const isOnline = useOnlineStore((state) => state.onlineIds.has(user.id));
 
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
     if (myId) {
       navigate(`/chat/${user.id}/${user.username}`);
     } else {
@@ -20,9 +21,16 @@ export const UserCard = ({ user }: UserCardProps) => {
     }
   };
 
+  const handleNavigate = () => {
+    navigate(`/profile/${user.id}`);
+  };
+
   return (
     <li>
-      <article className="bg-app-card grid grid-cols-[auto_1fr_auto] items-center rounded-2xl border border-gray-50/50 p-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+      <article
+        onClick={handleNavigate}
+        className="bg-app-card grid cursor-pointer grid-cols-[auto_1fr_auto] items-center rounded-2xl border border-gray-50/50 p-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)]"
+      >
         <div className="relative mr-2 flex h-14 w-14 items-center">
           <UserAvatar avatar_url={user.avatar_url}></UserAvatar>
           {isOnline ? (

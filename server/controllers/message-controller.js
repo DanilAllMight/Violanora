@@ -8,6 +8,8 @@ const { findSocketByUserId } = require("../services/webSocket");
 const { getSingleConversation } = require("./conversation-controller");
 const AppError = require("../utils/appError");
 const errorMessages = require("../constants/errorMessages");
+const socketMessages = require("../constants/socketMessages");
+require("dotenv").config();
 
 class MessageController {
   async getMessages(req, res, next) {
@@ -68,6 +70,35 @@ class MessageController {
 
   async editMessage(req, res, next) {
     logger.info("Пользователь редактирует сообщение");
+
+    const { data } = req.body;
+
+    const userId = req.user.id;
+    const targetId = data.targetId;
+
+    const response = await messageService.editMessage(data, userId);
+
+    const mySocket = findSocketByUserId(userId);
+    if (mySocket) {
+      mySocket.send(
+        JSON.stringify({
+          type: socketMessages.SERVER_UPDATED_MESSAGE,
+          data: response,
+        }),
+      );
+    }
+
+    const partnerSocket = findSocketByUserId(targetId);
+    if (partnerSocket) {
+      partnerSocket.send(
+        JSON.stringify({
+          type: socketMessages.SERVER_UPDATED_MESSAGE,
+          data: response,
+        }),
+      );
+    }
+
+    return res.json(response);
   }
 }
 

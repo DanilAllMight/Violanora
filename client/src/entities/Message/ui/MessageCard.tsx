@@ -1,3 +1,4 @@
+import { useMessageEditStore } from "../model/store";
 import type { Message } from "../model/types/Message";
 import { MessageAttachments } from "./MessageAttachments";
 import { MessageOptionsMenu } from "@/widgets/MessageOptionsMenu";
@@ -12,6 +13,12 @@ interface MessageCardProps {
 export const MessageCard = ({ msg, isMe, username }: MessageCardProps) => {
   const hasAttachments = msg.attachments && msg.attachments.length > 0;
 
+  const setIsEdit = useMessageEditStore((state) => state.setIsEdit);
+  const setEditingText = useMessageEditStore((state) => state.setEditingText);
+  const setEditingMessage = useMessageEditStore(
+    (state) => state.setEditingMessage,
+  );
+
   const handleReply = () => {
     console.log("Ответ на сообщение:", msg._id);
   };
@@ -25,7 +32,10 @@ export const MessageCard = ({ msg, isMe, username }: MessageCardProps) => {
   };
 
   const handleEdit = () => {
-    console.log("Удаление сообщения:", msg._id);
+    console.log("Редактирование сообщения:", msg._id);
+    setIsEdit(true);
+    setEditingText(msg.text);
+    setEditingMessage(msg);
   };
 
   const handleForward = () => {
@@ -104,6 +114,7 @@ export const MessageCard = ({ msg, isMe, username }: MessageCardProps) => {
           onForward={handleForward}
           onReply={handleReply}
           onDelete={handleDelete}
+          isMe={isMe}
         >
           <button
             title="Расширенные возможности"

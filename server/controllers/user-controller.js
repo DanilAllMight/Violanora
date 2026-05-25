@@ -17,6 +17,7 @@ const UpdateUserDataResponse = require("../dtos/user/updateUserData.response.dto
 const DeleteUserResponse = require("../dtos/user/deleteUser.response.dto");
 const ReliveUserResponse = require("../dtos/user/reliveUser.response.dto");
 const catchAsync = require("../utils/catchAsync");
+const GetUserDataResponse = require("../dtos/user/getUserData.response");
 
 class UserController {
   async getUsers(req, res, next) {
@@ -120,6 +121,18 @@ class UserController {
       message: "Пользователь успешно восстановлен",
       user: user,
     });
+  }
+
+  async getUserData(req, res, next) {
+    const { userId } = req.params;
+
+    logger.info(userId, "Пользователь запросил данные о пользователе");
+
+    const userData = await UserService.getUserData(userId);
+
+    const user = new GetUserDataResponse(userData);
+
+    return res.json(user);
   }
 }
 

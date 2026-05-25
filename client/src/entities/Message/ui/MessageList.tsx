@@ -1,5 +1,5 @@
 import { useUserStore } from "../../User/model/store/useUserStore";
-import { type Message, type MessagesList } from "../model/types/Message";
+import { type Message, type MessagesListProps } from "../model/types/Message";
 import { MessageCard } from "./MessageCard";
 import { useConversationStore } from "@/entities/Conversation/model/store/useConversationStore";
 
@@ -22,7 +22,7 @@ const groupMessagesByDate = (messages: Message[]) => {
   );
 };
 
-export const MessageList = ({ messages }: MessagesList) => {
+export const MessageList = ({ messages }: MessagesListProps) => {
   const user = useUserStore.getState().authData;
   const username = useConversationStore.getState().partner.username;
 

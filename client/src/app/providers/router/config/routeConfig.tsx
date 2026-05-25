@@ -46,8 +46,8 @@ export const publicRoutes = [
 ];
 
 export const privateRoutes = [
+  { path: "/profile/:userId", element: <ProfilePage /> },
   { path: "/chat/:userId/:username", element: <ChatPage /> },
-  { path: "/profile", element: <ProfilePage /> },
   { path: "/message", element: <MessagePage /> },
   { path: "/admin", element: <AdminPage />, roles: ["ADMIN"] },
 ];

@@ -1,16 +1,21 @@
 import { updateProfileData } from "../api/updateProfileData";
 import { profileSchema, type ProfileFormData } from "../model/types";
 import { useUserStore } from "@/entities/User/model/store";
+//import { useUserProfileStore } from "@/entities/User/model/store/useUserProfileStore";
 import { Button, Input } from "@/shared/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 
 interface ProfileEditFormProps {
+  isMine: boolean;
   setIsEdit: (isEdit: boolean) => void;
 }
 
-export const ProfileEditForm = ({ setIsEdit }: ProfileEditFormProps) => {
+export const ProfileEditForm = ({
+  isMine,
+  setIsEdit,
+}: ProfileEditFormProps) => {
   const myId = useUserStore((state) => state.authData?.id);
   const username = useUserStore((state) => state.authData?.username);
 
@@ -31,7 +36,10 @@ export const ProfileEditForm = ({ setIsEdit }: ProfileEditFormProps) => {
         userId: myId,
         data: data,
       };
-      await updateProfileData(_data);
+      const resp = await updateProfileData(_data);
+      if (isMine && resp) {
+        //useUserProfileStore.getState().setUserData();
+      }
       setIsEdit(false);
     } catch (error) {}
   };

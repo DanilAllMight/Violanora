@@ -83,6 +83,19 @@ export const useConversationSocket = (targetId: string | undefined) => {
           );
         }
 
+        if (data.type === "UPDATED_MESSAGE") {
+          console.log("СООБЩЕНИЕ ОБНОВЛЕНО ", data);
+
+          // Достаем объект обновленного сообщения из пришедших данных
+          const updatedMessage = data.data;
+
+          setMessages((prevMessages) =>
+            prevMessages.map((msg) =>
+              msg._id === updatedMessage._id ? updatedMessage : msg,
+            ),
+          );
+        }
+
         if (data.type === "PARTNER_READ_MESSAGES") {
           const listStore = useConversationListStore.getState();
           const msgDialogId = String(data.dialogId);
