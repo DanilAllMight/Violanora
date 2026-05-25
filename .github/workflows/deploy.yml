@@ -20,8 +20,8 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           script: |
             cd /var/www/my-project/Real-Time-Chat-VPS
-            docker compose down
             git pull origin main
+            docker compose down
             docker compose up --build -d
             docker system prune -f
             echo "Деплой успешно завершен!"
