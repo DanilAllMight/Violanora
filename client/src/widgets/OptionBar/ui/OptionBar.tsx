@@ -14,13 +14,14 @@ export const OptionBar = () => {
 
   const userRole = useUserStore((state) => state.authData?.role) || "USER";
   const isAdmin = userRole == "ADMIN";
+  const authData = useUserStore((state) => state.authData);
 
   const unreadCount = useConversationUnreadStore((state) => state.unreadCount);
   const { fetchUnreadCount } = useConversationUnreadStore();
 
   useEffect(() => {
     fetchUnreadCount();
-  }, [unreadCount]);
+  }, []);
 
   const logout_ = () => {
     logout();
@@ -115,7 +116,7 @@ export const OptionBar = () => {
 
             <DropdownMenu.Item className="hover:bg-app-nav flex rounded-xl p-0 outline-none">
               <NavLink
-                to="/profile"
+                to={`/profile/${authData?.id}`}
                 className="text-app-text flex w-full items-center p-3"
               >
                 Личный кабинет

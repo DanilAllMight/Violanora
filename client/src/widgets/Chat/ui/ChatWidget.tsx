@@ -4,6 +4,9 @@ import { useCallConversationSocket } from "@/entities/Conversation/model/hooks";
 import { useConversationSocket } from "@/entities/Conversation/model/hooks/useConversationSocket";
 import { useConversationUnreadStore } from "@/entities/Conversation/model/store";
 import { useConversationStore } from "@/entities/Conversation/model/store/useConversationStore";
+import { updateMessage } from "@/entities/Message/api/updateMessage";
+import { useMessageEditStore } from "@/entities/Message/model/store";
+import type { MessageUpdateProps } from "@/entities/Message/model/types";
 import { MessageList } from "@/entities/Message/ui";
 import { useUserStore } from "@/entities/User/model/store/useUserStore";
 import { uploadChatMedia } from "@/features/attach-media";
@@ -34,6 +37,9 @@ export const ChatWidget = ({ userId: targetId }: ChatWidgetProps) => {
   const resetActiveDialog = useConversationStore(
     (state) => state.resetActiveDialog,
   );
+
+  const messageId = useMessageEditStore((state) => state.editingMessage?._id);
+
   const partner_avatar = useConversationStore((state) => state.partner.avatar);
   const username = useConversationStore((state) => state.partner.username);
 
@@ -131,6 +137,42 @@ export const ChatWidget = ({ userId: targetId }: ChatWidgetProps) => {
           socket.send(JSON.stringify({ type: "TYPING_STOP", to: targetId }));
         }
       }, 2000);
+    }
+  };
+
+  const handleUpdate = async () => {
+    const hasFiles = files.length > 0;
+
+    const editingText = useMessageEditStore.getState().editingText;
+    const editingAttachments =
+      useMessageEditStore.getState().editingMessage?.attachments;
+    const editingMessage = useMessageEditStore.getState().editingMessage;
+
+    if (editingAttachments) {
+      let attachmentUrls: { url: string; type: string }[] = [];
+
+      if (hasFiles) {
+        const urls = await uploadChatMedia(files);
+        attachmentUrls = urls.map((url) => ({ url, type: "image" }));
+      }
+
+      if (messageId && editingMessage) {
+        const data: MessageUpdateProps = {
+          editingText: editingText,
+          editingAttachments: editingAttachments,
+          attachmentsUrls: attachmentUrls,
+          messageId: messageId,
+          createdAt: editingMessage?.createdAt,
+          targetId: targetId,
+        };
+
+        await updateMessage({ data });
+
+        useMessageEditStore.getState().setEditingText("");
+        useMessageEditStore.getState().setEditingMessage(null);
+        useMessageEditStore.getState().setIsEdit(false);
+        setFiles([]);
+      }
     }
   };
 
@@ -248,6 +290,7 @@ export const ChatWidget = ({ userId: targetId }: ChatWidgetProps) => {
         onFilesSelected={handleFilesSelected}
         onRemoveFile={handleRemoveFile}
         isSending={isSending}
+        handleUpdate={handleUpdate}
       ></ChatFooter>
     </div>
   );

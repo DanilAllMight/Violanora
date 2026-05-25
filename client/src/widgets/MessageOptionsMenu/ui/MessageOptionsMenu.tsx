@@ -1,22 +1,23 @@
 // src/components/MessageMenu.tsx
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { Copy, CornerUpLeft, Forward, Pencil, Trash2 } from "lucide-react";
-// Новые иконки
 import { type ReactNode } from "react";
 
 interface MessageOptionsMenuProps {
   children: ReactNode;
   align: "start" | "end";
-  onCopy: () => void; // Добавил проп
+  isMe: boolean;
+  onCopy: () => void;
   onReply: () => void;
-  onForward: () => void; // Добавил проп
-  onEdit: () => void; // Добавил проп вместо дубликата
+  onForward: () => void;
+  onEdit: () => void;
   onDelete: () => void;
 }
 
 export const MessageOptionsMenu = ({
   children,
   align,
+  isMe,
   onCopy,
   onReply,
   onForward,
@@ -42,29 +43,33 @@ export const MessageOptionsMenu = ({
             Копировать
           </DropdownMenu.Item>
 
-          <DropdownMenu.Item
-            onClick={onReply}
-            className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-xs text-gray-700 outline-none hover:bg-gray-50 focus:bg-gray-50"
-          >
-            <CornerUpLeft size={14} />
-            Ответить
-          </DropdownMenu.Item>
+          {isMe && (
+            <>
+              <DropdownMenu.Item
+                onClick={onReply}
+                className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-xs text-gray-700 outline-none hover:bg-gray-50 focus:bg-gray-50"
+              >
+                <CornerUpLeft size={14} />
+                Ответить
+              </DropdownMenu.Item>
 
-          <DropdownMenu.Item
-            onClick={onForward}
-            className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-xs text-gray-700 outline-none hover:bg-gray-50 focus:bg-gray-50"
-          >
-            <Forward size={14} />
-            Переслать
-          </DropdownMenu.Item>
+              <DropdownMenu.Item
+                onClick={onForward}
+                className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-xs text-gray-700 outline-none hover:bg-gray-50 focus:bg-gray-50"
+              >
+                <Forward size={14} />
+                Переслать
+              </DropdownMenu.Item>
 
-          <DropdownMenu.Item
-            onClick={onEdit}
-            className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-xs text-gray-700 outline-none hover:bg-gray-50 focus:bg-gray-50"
-          >
-            <Pencil size={14} />
-            Изменить
-          </DropdownMenu.Item>
+              <DropdownMenu.Item
+                onClick={onEdit}
+                className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-xs text-gray-700 outline-none hover:bg-gray-50 focus:bg-gray-50"
+              >
+                <Pencil size={14} />
+                Изменить
+              </DropdownMenu.Item>
+            </>
+          )}
 
           <DropdownMenu.Separator className="my-1 h-px bg-gray-100" />
 

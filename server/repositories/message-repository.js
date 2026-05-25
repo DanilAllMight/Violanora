@@ -27,6 +27,47 @@ class MessageRepository extends MongoBaseRepository {
       { limit, sort: { createdAt: -1 } },
     );
   }
+
+  async updateMessageContent({
+    messageId,
+    editingText,
+    editingAttachments,
+    attachmentsUrls,
+  }) {
+    logger.debug(`Редактирование содержимого сообщения с ID: ${messageId}`);
+
+    const oldAttachments = Array.isArray(editingAttachments)
+      ? editingAttachments
+      : [];
+    const newAttachments = Array.isArray(attachmentsUrls)
+      ? attachmentsUrls
+      : [];
+
+    const updatedAttachments = [
+      ...oldAttachments.map((file) => ({
+        url: file.url,
+        type: file.type || "image",
+      })),
+      ...newAttachments.map((file) => ({
+        url: file.url,
+        type: file.type || "image",
+      })),
+    ];
+
+    const updateData = {
+      $set: {
+        text: editingText || "",
+        attachments: updatedAttachments,
+      },
+    };
+
+    return await this.findByIdAndUpdate(messageId, {
+      $set: {
+        text: editingText || "",
+        attachments: updatedAttachments,
+      },
+    });
+  }
 }
 
 module.exports = new MessageRepository();

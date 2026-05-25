@@ -12,6 +12,6 @@ export interface Message {
   attachments: IAttachment[];
 }
 
-export interface MessagesList {
+export interface MessagesListProps {
   messages: Message[];
 }

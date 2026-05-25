@@ -20,6 +20,11 @@ router.get(
     userController.getUsersForAdmin(req, res, next),
   ),
 );
+router.get(
+  "/userData/:userId",
+  authMiddleware,
+  catchAsync((req, res, next) => userController.getUserData(req, res, next)),
+);
 router.post(
   "/relive",
   authMiddleware,

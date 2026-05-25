@@ -46,6 +46,25 @@ export const useOnlineListener = (userId: number | undefined) => {
           }
         }
 
+        if (data.type === "UPDATED_MESSAGE") {
+          const msgDialogId = String(data.data.dialogId);
+
+          const listStore = useConversationListStore.getState();
+
+          if (data.data.text == "") {
+            data.data.text = "📷 Фотография";
+          }
+
+          listStore.updateConversation(msgDialogId, {
+            lastMessage: {
+              text: data.data.text,
+              senderId: data.data.senderId,
+              status: data.data.status || "sent",
+              createdAt: new Date().toISOString(),
+            },
+          });
+        }
+
         if (data.type === "NEW_MESSAGE") {
           const listStore = useConversationListStore.getState();
           const activeStore = useConversationStore.getState();
