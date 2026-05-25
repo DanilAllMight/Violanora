@@ -1,7 +1,7 @@
 import { updateProfileData } from "../api/updateProfileData";
 import { profileSchema, type ProfileFormData } from "../model/types";
 import { useUserStore } from "@/entities/User/model/store";
-import { useUserProfileStore } from "@/entities/User/model/store/useUserProfileStore";
+//import { useUserProfileStore } from "@/entities/User/model/store/useUserProfileStore";
 import { Button, Input } from "@/shared/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
@@ -38,7 +38,7 @@ export const ProfileEditForm = ({
       };
       const resp = await updateProfileData(_data);
       if (isMine && resp) {
-        useUserProfileStore.getState().setUserData(resp);
+        //useUserProfileStore.getState().setUserData();
       }
       setIsEdit(false);
     } catch (error) {}

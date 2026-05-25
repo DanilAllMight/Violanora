@@ -1,4 +1,4 @@
-import type { User, UserData } from "../model/types";
+import type { User } from "../model/types";
 import { $api } from "@/shared/api";
 
 interface UserDataProps {
